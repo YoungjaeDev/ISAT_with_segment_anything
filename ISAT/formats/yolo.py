@@ -22,6 +22,7 @@ class YOLO(ISAT):
 
     def __init__(self):
         self.keep_crowd = True
+        self.ignore_background = False  # only work when isat2yolo
 
     def read_from_YOLO(
         self, img_root: str, txt_root: str, class_dict: dict = None
@@ -293,6 +294,8 @@ class YOLO(ISAT):
 
                 # 同category
                 for cat in cats:
+                    if self.ignore_background and cat == "__background__":
+                        continue
                     objs_with_cat = [
                         obj for obj in objs_with_group if obj.category == cat
                     ]

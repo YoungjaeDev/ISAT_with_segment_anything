@@ -269,10 +269,20 @@ class YOLOConverter(Converter, YOLO):
         self.load_from_isat()
 
         # save to yolo
-        cates_index_dict = {cat: index for index, cat in enumerate(self.cates)}
+        cates_index_dict = {}
+        index = 0
+        for cat in self.cates:
+            if self.ignore_background and cat == "__background__":
+                continue
+            cates_index_dict[cat] = index
+            index += 1
+
         with open(os.path.join(self.yolo_txt_root, "classification.txt"), "w") as f:
             for cat in self.cates:
+                if self.ignore_background and cat == "__background__":
+                    continue
                 f.write("{}\n".format(cat))
+
         num_annos = len(self.annos)
         for index, (name_without_suffix, anno) in enumerate(self.annos.items()):
             if self.cancel:
@@ -624,6 +634,7 @@ class ConverterDialog(QtWidgets.QDialog, Ui_Dialog):
                     self.converter = YOLOConverter()
                     self.converter.message.connect(self.print_message)
                     self.converter.yolo2isat = False
+                    self.converter.ignore_background = self.checkBox_ignore_background.isChecked()
                     self.converter.isat_json_root = (
                         self.lineEdit_isat2yolo_isat_json_root.text()
                     )
