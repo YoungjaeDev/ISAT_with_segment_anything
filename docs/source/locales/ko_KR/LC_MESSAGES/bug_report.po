@@ -1,0 +1,97 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Shuwei Ji and Hongyuan Zhang
+# This file is distributed under the same license as the ISAT-SAM package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ISAT-SAM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-06 21:21+0900\n"
+"PO-Revision-Date: 2026-03-06 21:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko_KR <LL@li.org>\n"
+"Language: ko_KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../source/bug_report.rst:2
+msgid "Bug report"
+msgstr "버그 신고"
+
+#: ../../source/bug_report.rst:4
+msgid "Thank you for helping us improve ISAT！"
+msgstr "ISAT 개선에 도움을 주셔서 감사합니다!"
+
+#: ../../source/bug_report.rst:7
+msgid "1. Submit a bug report"
+msgstr "1. 버그 보고서 제출"
+
+#: ../../source/bug_report.rst:9
+msgid "Before submit, you should:"
+msgstr "제출하기 전에 다음을 수행해야 합니다."
+
+#: ../../source/bug_report.rst:11
+msgid ""
+"**Use the GitHub issue search** - check if the issue has already been "
+"reported."
+msgstr "**GitHub 문제 검색을 사용하세요** - 문제가 이미 보고되었는지 확인하세요."
+
+#: ../../source/bug_report.rst:12
+msgid ""
+"**Check if the issue has been fixed** - try to reproduce it using the latest"
+" version in the repository."
+msgstr "**문제가 해결되었는지 확인하세요** - 저장소의 최신 버전을 사용하여 문제를 재현해 보세요."
+
+#: ../../source/bug_report.rst:13
+msgid ""
+"**Isolate the problem** - Try to reproduce the problem in a minimal "
+"environment."
+msgstr "**문제 격리** - 최소한의 환경에서 문제를 재현해 봅니다."
+
+#: ../../source/bug_report.rst:15
+msgid ""
+"You can create a new issue to submit a bug report via the `GitHub issue "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/issues>`_."
+msgstr ""
+"`GitHub issue "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/issues>`_ 을 통해 버그 "
+"보고서를 제출하려면 새 문제를 생성할 수 있습니다."
+
+#: ../../source/bug_report.rst:19
+msgid ""
+"If you're not sure whether it's a bug, you can try asking questions in the "
+"`discussion hub "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/discussions>`_ "
+"instead of submitting a bug report."
+msgstr ""
+"버그인지 확실하지 않은 경우 버그 보고서를 제출하는 대신 `discussion hub "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/discussions>`_ 에 질문해"
+" 보세요."
+
+#: ../../source/bug_report.rst:22
+msgid "2. Template"
+msgstr "2. 템플릿"
+
+#: ../../source/bug_report.rst:24
+msgid ""
+"High - quality bug reports are crucial for us to quickly locate and fix "
+"problems."
+msgstr "고품질 버그 보고서는 문제를 신속하게 찾아 수정하는 데 매우 중요합니다."
+
+#: ../../source/bug_report.rst:26
+msgid ""
+"A high quality bug report shouldn’t leave others needing to chase you up for"
+" more information."
+msgstr "고품질 버그 보고서로 인해 다른 사람들이 더 많은 정보를 얻기 위해 당신을 추적해야 하는 상황이 발생해서는 안 됩니다."
+
+#: ../../source/bug_report.rst:28
+msgid "Please try to be as detailed as possible in your report."
+msgstr "보고서에는 가능한 한 자세하게 기술해 주십시오."
+
+#: ../../source/bug_report.rst:30
+msgid "Please create a bug report using the provided template."
+msgstr "제공된 템플릿을 사용하여 버그 보고서를 작성하세요."

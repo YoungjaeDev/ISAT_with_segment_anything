@@ -1,0 +1,93 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Shuwei Ji and Hongyuan Zhang
+# This file is distributed under the same license as the ISAT-SAM package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ISAT-SAM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-06 21:21+0900\n"
+"PO-Revision-Date: 2026-03-06 21:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko_KR <LL@li.org>\n"
+"Language: ko_KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../source/install.rst:2
+msgid "Installation"
+msgstr "설치"
+
+#: ../../source/install.rst:5
+msgid "Option 1: Install with Pip"
+msgstr "옵션 1: Pip으로 설치"
+
+#: ../../source/install.rst:7 ../../source/install.rst:59
+msgid "Create a new environment (recommended, optional)"
+msgstr "새 환경 만들기(권장, 선택 사항)"
+
+#: ../../source/install.rst:9 ../../source/install.rst:61
+msgid "Use conda create a new environment"
+msgstr "conda를 사용하여 새 환경 만들기"
+
+#: ../../source/install.rst:15 ../../source/install.rst:67
+msgid "activate new environment"
+msgstr "새 환경 활성화"
+
+#: ../../source/install.rst:21
+msgid "Install ISAT-SAM using pip"
+msgstr "pip를 사용하여 ISAT-SAM 설치"
+
+#: ../../source/install.rst:29 ../../source/install.rst:81
+msgid ""
+"To use GPU on Windows OS, install torch and torchvision from `Pytorch "
+"<https://pytorch.org/>`_"
+msgstr ""
+"Windows에서 GPU를 사용하려면 `Pytorch <https://pytorch.org/>`_ 에서 torch와 "
+"torchvision을 설치하세요."
+
+#: ../../source/install.rst:31 ../../source/install.rst:83
+msgid "Run"
+msgstr "실행"
+
+#: ../../source/install.rst:33 ../../source/install.rst:85
+msgid "Start the application via the command line:"
+msgstr "명령줄을 통해 애플리케이션을 시작합니다."
+
+#: ../../source/install.rst:39
+msgid "Recommended install isat-sam using pip"
+msgstr "isat-sam은 pip으로 설치하는 것을 권장합니다."
+
+#: ../../source/install.rst:42
+msgid "Option 2: Install from Source Code"
+msgstr "옵션 2: 소스 코드에서 설치"
+
+#: ../../source/install.rst:44
+msgid "Get source code from github"
+msgstr "GitHub에서 소스 코드 받기"
+
+#: ../../source/install.rst:46
+msgid "Use git clone project and then into project"
+msgstr "git clone으로 프로젝트를 내려받은 뒤 프로젝트 디렉터리로 이동합니다."
+
+#: ../../source/install.rst:53
+msgid ""
+"Or download zip from `Github "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/archive/refs/heads/master.zip>`_"
+" , unzip and into project"
+msgstr ""
+"또는 `GitHub "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/archive/refs/heads/master.zip>`_"
+" 에서 zip 파일을 내려받아 압축을 푼 뒤 프로젝트 디렉터리로 이동합니다."
+
+#: ../../source/install.rst:73
+msgid "Install dependencies"
+msgstr "종속성 설치"
+
+#: ../../source/install.rst:91
+msgid "Or"
+msgstr "또는"

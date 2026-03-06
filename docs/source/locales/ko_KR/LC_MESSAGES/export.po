@@ -1,0 +1,66 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Shuwei Ji and Hongyuan Zhang
+# This file is distributed under the same license as the ISAT-SAM package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ISAT-SAM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-06 21:21+0900\n"
+"PO-Revision-Date: 2026-03-06 21:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko_KR <LL@li.org>\n"
+"Language: ko_KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../source/export.rst:2
+msgid "Export"
+msgstr "내보내기"
+
+#: ../../source/export.rst:5
+msgid "1. ISAT Json Format"
+msgstr "1. ISAT JSON 형식"
+
+#: ../../source/export.rst:54
+msgid "2. Export as Common Data Formats."
+msgstr "2. 공통 데이터 형식으로 내보내기."
+
+#: ../../source/export.rst:56
+msgid ""
+"Click ``Converter`` button in Tool in Menu bar to open Converter interface."
+msgstr "메뉴 막대의 도구에서 ``Converter`` 버튼을 클릭하여 변환기 인터페이스를 엽니다."
+
+#: ../../source/export.rst:-1
+msgid "export.png"
+msgstr "export.png"
+
+#: ../../source/export.rst:61
+msgid ""
+"ISAT provides the conversion functionality between the following data "
+"formats:"
+msgstr "ISAT은 다음 데이터 형식 간의 변환 기능을 제공합니다."
+
+#: ../../source/export.rst:63
+msgid "ISAT <==> COCO"
+msgstr "ISAT <==> COCO"
+
+#: ../../source/export.rst:64
+msgid "ISAT <==> YOLO"
+msgstr "ISAT <==> YOLO"
+
+#: ../../source/export.rst:65
+msgid "ISAT <==> LABELME"
+msgstr "ISAT <==> LABELME"
+
+#: ../../source/export.rst:66
+msgid "ISAT ===> VOC"
+msgstr "ISAT ===> VOC"
+
+#: ../../source/export.rst:67
+msgid "ISAT ===> VOC(object detection)"
+msgstr "ISAT ===> VOC(객체 감지)"

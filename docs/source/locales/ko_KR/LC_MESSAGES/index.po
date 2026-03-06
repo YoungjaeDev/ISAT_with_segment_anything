@@ -1,0 +1,107 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Shuwei Ji and Hongyuan Zhang
+# This file is distributed under the same license as the ISAT-SAM package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ISAT-SAM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-06 21:21+0900\n"
+"PO-Revision-Date: 2026-03-06 21:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko_KR <LL@li.org>\n"
+"Language: ko_KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../source/index.rst:2
+msgid "Welcome to ISAT-SAM's documentation!"
+msgstr "ISAT-SAM 문서에 오신 것을 환영합니다!"
+
+#: ../../source/index.rst:4
+msgid ""
+"**ISAT-SAM** stands for Interactive Semi-Automatic Annotation Tool with "
+"`Segment Anything Model <https://github.com/facebookresearch/segment-"
+"anything>`_"
+msgstr ""
+"**ISAT-SAM** 은 `Segment Anything Model "
+"<https://github.com/facebookresearch/segment-anything>`_ 이 포함된 대화형 반자동 주석 "
+"도구를 나타냅니다."
+
+#: ../../source/index.rst:6
+msgid ""
+"You can `access the project "
+"<https://github.com/yatengLG/ISAT_with_segment_anything>`_ on GitHub and "
+"view the source code."
+msgstr ""
+"GitHub에서 `프로젝트 <https://github.com/yatengLG/ISAT_with_segment_anything>`_ 에 "
+"접속하여 소스코드를 보실 수 있습니다."
+
+#: ../../source/index.rst:-1
+msgid "software.gif"
+msgstr "software.gif"
+
+#: ../../source/index.rst:12
+msgid "Features"
+msgstr "주요 기능"
+
+#: ../../source/index.rst:14
+msgid ""
+"Focusing on the field of image segmentation, we strive to create the best "
+"image segmentation annotation software."
+msgstr "우리는 이미지 분할 분야에 중점을 두고 최고의 이미지 분할 주석 소프트웨어를 만들기 위해 노력하고 있습니다."
+
+#: ../../source/index.rst:16
+msgid "Better performance and a smoother annotation experience."
+msgstr "더 나은 성능과 더 매끄러운 주석 경험을 제공합니다."
+
+#: ../../source/index.rst:17
+msgid ""
+"Supports `SAM <https://github.com/facebookresearch/segment-anything>`_, "
+"`SAM2 <https://github.com/facebookresearch/segment-anything-2>`_, `SAM3 "
+"<https://github.com/facebookresearch/sam3>`_, `Sam-HQ "
+"<https://github.com/SysCV/sam-hq>`_, `MobileSAM "
+"<https://github.com/ChaoningZhang/MobileSAM>`_, `EdgeSAM "
+"<https://github.com/chongzhou96/EdgeSAM>`_ and `MedSAM "
+"<https://github.com/bowang-lab/MedSAM>`_."
+msgstr ""
+"`SAM <https://github.com/facebookresearch/segment-anything>`_, `SAM2 "
+"<https://github.com/facebookresearch/segment-anything-2>`_, `SAM3 "
+"<https://github.com/facebookresearch/sam3>`_, `Sam-HQ "
+"<https://github.com/SysCV/sam-hq>`_, `MobileSAM "
+"<https://github.com/ChaoningZhang/MobileSAM>`_, `EdgeSAM "
+"<https://github.com/chongzhou96/EdgeSAM>`_ 및 `MedSAM "
+"<https://github.com/bowang-lab/MedSAM>`_ 을 지원합니다."
+
+#: ../../source/index.rst:18
+msgid ""
+"Supports `Segment anything model "
+"<https://github.com/facebookresearch/segment-anything>`_ with ``point "
+"prompt`` and ``box prompt`` to semi-automatic annotation."
+msgstr ""
+"반자동 주석에 ``point prompt`` 및 ``box prompt`` 을 사용하여 `Segment anything model "
+"<https://github.com/facebookresearch/segment-anything>`_ 을 지원합니다."
+
+#: ../../source/index.rst:19
+msgid "Supports ``text prompt`` and ``visual prompt`` based on sam3."
+msgstr "SAM3을 기반으로 ``text prompt`` 및 ``visual prompt`` 을 지원합니다."
+
+#: ../../source/index.rst:20
+msgid "Supports using remote server for SAM encoding."
+msgstr "SAM 인코딩에 원격 서버 사용을 지원합니다."
+
+#: ../../source/index.rst:21
+msgid "Supports ``video annotation``."
+msgstr "``video annotation`` 을 지원합니다."
+
+#: ../../source/index.rst:22
+msgid "Supports plugin extensions."
+msgstr "plugin 확장을 지원합니다."
+
+#: ../../source/index.rst:25
+msgid "Contents"
+msgstr "목차"

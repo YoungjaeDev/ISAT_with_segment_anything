@@ -1,0 +1,79 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Shuwei Ji and Hongyuan Zhang
+# This file is distributed under the same license as the ISAT-SAM package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ISAT-SAM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-06 21:21+0900\n"
+"PO-Revision-Date: 2026-03-06 21:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko_KR <LL@li.org>\n"
+"Language: ko_KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../source/plugin_usage.rst:2
+msgid "Plugin Usage"
+msgstr "플러그인 사용법"
+
+#: ../../source/plugin_usage.rst:5
+msgid "1. Install"
+msgstr "1. 설치"
+
+#: ../../source/plugin_usage.rst:7
+msgid ""
+"All ISAT plugins are released in the form of Python packages, you can "
+"quickly install it via the pip command."
+msgstr "모든 ISAT plugins은(는) Python 패키지 형태로 출시되며, pip 명령을 통해 빠르게 설치할 수 있습니다."
+
+#: ../../source/plugin_usage.rst:10
+msgid "For example to install the ``isat-plugin-mask-export``"
+msgstr "예를 들어 ``isat-plugin-mask-export`` 을(를) 설치하려면"
+
+#: ../../source/plugin_usage.rst:16
+msgid ""
+"For specific plugin usage and installation, please refer to the instructions"
+" provided by the plugin. This should be provided in the page of the plugin "
+"project."
+msgstr ""
+"특정 plugin 사용 및 설치에 대해서는 plugin에서 제공하는 지침을 참조하세요. 이는 plugin 프로젝트 페이지에 제공되어야 "
+"합니다."
+
+#: ../../source/plugin_usage.rst:18
+msgid ""
+"After installing the plugin, click the reload button or restart ISAT to load"
+" the plugin."
+msgstr "plugin을(를) 설치한 후 다시 로드 버튼을 클릭하거나 ISAT을(를) 다시 시작하여 plugin을(를) 로드하세요."
+
+#: ../../source/plugin_usage.rst:20
+msgid ""
+"For more plugins, please refer to the `plugin list <plugin_list.html#plugin-"
+"list>`_."
+msgstr ""
+"plugins에 대한 자세한 내용은 `plugin list <plugin_list.html#plugin-list>`_ 을 참조하세요."
+
+#: ../../source/plugin_usage.rst:23
+msgid "2. Usage"
+msgstr "2. 사용법"
+
+#: ../../source/plugin_usage.rst:25
+msgid ""
+"Click ``Plugins`` button in right toolbar to open plugins interface, and "
+"then check the boxes of plugins you need to use."
+msgstr ""
+"오른쪽 도구 모음에서 ``Plugins`` 버튼을 클릭하여 plugins 인터페이스를 연 다음 사용해야 하는 plugins 확인란을 "
+"선택하세요."
+
+#: ../../source/plugin_usage.rst:-1
+msgid "plugins.png"
+msgstr "plugins.png"
+
+#: ../../source/plugin_usage.rst:30
+msgid "Activating multiple plugins simultaneously may cause conflicts."
+msgstr "여러 plugins을 동시에 활성화하면 충돌이 발생할 수 있습니다."

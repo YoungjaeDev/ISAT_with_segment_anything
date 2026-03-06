@@ -1,0 +1,71 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Shuwei Ji and Hongyuan Zhang
+# This file is distributed under the same license as the ISAT-SAM package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ISAT-SAM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-06 21:21+0900\n"
+"PO-Revision-Date: 2026-03-06 21:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko_KR <LL@li.org>\n"
+"Language: ko_KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../source/plugin_list.rst:2
+msgid "Plugin List"
+msgstr "플러그인 목록"
+
+#: ../../source/plugin_list.rst:7
+msgid "Plugin"
+msgstr "Plugin"
+
+#: ../../source/plugin_list.rst:8
+msgid "Author"
+msgstr "작가"
+
+#: ../../source/plugin_list.rst:9
+msgid "Link"
+msgstr "링크"
+
+#: ../../source/plugin_list.rst:11
+msgid "AutoAnnotatePlugin"
+msgstr "자동 주석 플러그인"
+
+#: ../../source/plugin_list.rst:12 ../../source/plugin_list.rst:16
+msgid "yatengLG"
+msgstr "야텡LG"
+
+#: ../../source/plugin_list.rst:13
+msgid "https://github.com/yatengLG/ISAT_plugin_auto_annotate"
+msgstr "https://github.com/yatengLG/ISAT_plugin_auto_annotate"
+
+#: ../../source/plugin_list.rst:15
+msgid "MaskExportPlugin"
+msgstr "마스크내보내기플러그인"
+
+#: ../../source/plugin_list.rst:17
+msgid "https://github.com/yatengLG/ISAT_plugin_mask_export"
+msgstr "https://github.com/yatengLG/ISAT_plugin_mask_export"
+
+#: ../../source/plugin_list.rst:19
+msgid ""
+"Welcome everyone to recommend the plugins you've developed. ISAT will "
+"include them in the plugin list."
+msgstr ""
+"귀하가 개발한 plugins을(를) 추천해 주신 모든 분들을 환영합니다. ISAT은(는) plugin 목록에 해당 항목을 포함합니다."
+
+#: ../../source/plugin_list.rst:21
+msgid ""
+"You can create a new discussion to recommend a plugin in `ISAT discussions "
+"page <https://github.com/yatengLG/ISAT_with_segment_anything/discussions>`_"
+msgstr ""
+"`ISAT discussions page "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/discussions>`_ 에서 "
+"plugin을(를) 추천하기 위해 새 토론을 만들 수 있습니다."

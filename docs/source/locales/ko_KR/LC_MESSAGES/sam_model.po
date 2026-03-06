@@ -1,0 +1,488 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Shuwei Ji and Hongyuan Zhang
+# This file is distributed under the same license as the ISAT-SAM package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ISAT-SAM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-06 21:21+0900\n"
+"PO-Revision-Date: 2026-03-06 21:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko_KR <LL@li.org>\n"
+"Language: ko_KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../source/sam_model.rst:2
+msgid "SAM Model"
+msgstr "SAM 모델"
+
+#: ../../source/sam_model.rst:5
+msgid "1. Manage SAM Model"
+msgstr "1. SAM 모델 관리"
+
+#: ../../source/sam_model.rst:7
+msgid ""
+"Click the ``Model manager`` button in the right toolbar to open the model "
+"manager interface"
+msgstr "모델 관리자 인터페이스를 열려면 오른쪽 도구 모음에서 ``Model manager`` 버튼을 클릭하세요."
+
+#: ../../source/sam_model.rst:9
+msgid ""
+"Download the required models, and click the radio button in front of the "
+"model list to activate the model."
+msgstr "필요한 모델을 다운로드하고, 모델 목록 앞의 라디오 버튼을 클릭하면 해당 모델이 활성화됩니다."
+
+#: ../../source/sam_model.rst:-1
+msgid "model_manager.png"
+msgstr "model_manager.png"
+
+#: ../../source/sam_model.rst:16
+msgid "2. Remote SAM"
+msgstr "2. Remote SAM"
+
+#: ../../source/sam_model.rst:18
+msgid ""
+"Click the ``Remote SAM`` button in the right toolbar to open the remote sam "
+"interface"
+msgstr "Remote SAM 인터페이스를 열려면 오른쪽 도구 모음에서 ``Remote SAM`` 버튼을 클릭하세요."
+
+#: ../../source/sam_model.rst:-1
+msgid "remote_sam.png"
+msgstr "remote_sam.png"
+
+#: ../../source/sam_model.rst:23
+msgid ""
+"To use the remote sam, you must first install `ISAT with segment anything "
+"backend <https://github.com/yatengLG/ISAT_with_segment_anything_backend>`_ "
+"on the remote server."
+msgstr ""
+"Remote SAM을 사용하려면 먼저 원격 서버에 `ISAT with segment anything backend "
+"<https://github.com/yatengLG/ISAT_with_segment_anything_backend>`_ 을 설치해야 "
+"합니다."
+
+#: ../../source/sam_model.rst:25
+msgid "On the local machine, you also need to run the SAM model for decoding."
+msgstr "로컬 머신에서는 디코딩을 위해 SAM 모델도 실행해야 합니다."
+
+#: ../../source/sam_model.rst:27
+msgid ""
+"Currently, the entire SAM model needs to be loaded locally. In future "
+"updates, when using the remote SAM, only the decode part needs to be loaded "
+"locally. This work has not been completed yet."
+msgstr ""
+"현재 전체 SAM 모델을 로컬로 로드해야 합니다. 향후 업데이트에서는 원격 SAM을 사용할 때 디코드 부분만 로컬로 로드하면 됩니다. 이"
+" 작업은 아직 완료되지 않았습니다."
+
+#: ../../source/sam_model.rst:29
+msgid ""
+"The feature maps of Sam-hq model is too large. Do not use Sam-hq model on "
+"remote server."
+msgstr "Sam-HQ 모델의 feature map이 너무 큽니다. 원격 서버에서는 Sam-HQ 모델을 사용하지 마십시오."
+
+#: ../../source/sam_model.rst:32
+msgid "3. Supported SAM Models"
+msgstr "3. 지원되는 SAM 모델"
+
+#: ../../source/sam_model.rst:37
+msgid "Model"
+msgstr "모델"
+
+#: ../../source/sam_model.rst:38
+msgid "Checkpoint"
+msgstr "Checkpoint"
+
+#: ../../source/sam_model.rst:39
+msgid "Memory"
+msgstr "메모리"
+
+#: ../../source/sam_model.rst:40
+msgid "Memory (bfloat16)"
+msgstr "메모리(bfloat16)"
+
+#: ../../source/sam_model.rst:41
+msgid "Disk"
+msgstr "디스크"
+
+#: ../../source/sam_model.rst:42
+msgid "Image"
+msgstr "영상"
+
+#: ../../source/sam_model.rst:43
+msgid "Video"
+msgstr "동영상"
+
+#: ../../source/sam_model.rst:45
+msgid "SAM-HQ"
+msgstr "SAM-본사"
+
+#: ../../source/sam_model.rst:46
+msgid "sam_hq_vit_h.pth"
+msgstr "sam_hq_vit_h.pth"
+
+#: ../../source/sam_model.rst:47
+msgid "6464M"
+msgstr "6464M"
+
+#: ../../source/sam_model.rst:48 ../../source/sam_model.rst:108
+msgid "3378M"
+msgstr "3378M"
+
+#: ../../source/sam_model.rst:49 ../../source/sam_model.rst:109
+msgid "2.6G"
+msgstr "2.6G"
+
+#: ../../source/sam_model.rst:50 ../../source/sam_model.rst:57
+#: ../../source/sam_model.rst:64 ../../source/sam_model.rst:71
+#: ../../source/sam_model.rst:79 ../../source/sam_model.rst:87
+#: ../../source/sam_model.rst:94 ../../source/sam_model.rst:102
+#: ../../source/sam_model.rst:110 ../../source/sam_model.rst:117
+#: ../../source/sam_model.rst:124 ../../source/sam_model.rst:132
+#: ../../source/sam_model.rst:133 ../../source/sam_model.rst:139
+#: ../../source/sam_model.rst:140 ../../source/sam_model.rst:146
+#: ../../source/sam_model.rst:147 ../../source/sam_model.rst:153
+#: ../../source/sam_model.rst:154 ../../source/sam_model.rst:160
+#: ../../source/sam_model.rst:161 ../../source/sam_model.rst:167
+#: ../../source/sam_model.rst:168 ../../source/sam_model.rst:174
+#: ../../source/sam_model.rst:175 ../../source/sam_model.rst:181
+#: ../../source/sam_model.rst:182 ../../source/sam_model.rst:188
+#: ../../source/sam_model.rst:189
+msgid "yes"
+msgstr "예"
+
+#: ../../source/sam_model.rst:51 ../../source/sam_model.rst:58
+#: ../../source/sam_model.rst:65 ../../source/sam_model.rst:72
+#: ../../source/sam_model.rst:80 ../../source/sam_model.rst:88
+#: ../../source/sam_model.rst:95 ../../source/sam_model.rst:103
+#: ../../source/sam_model.rst:111 ../../source/sam_model.rst:118
+#: ../../source/sam_model.rst:125
+msgid "no"
+msgstr "아니요"
+
+#: ../../source/sam_model.rst:53
+msgid "sam_hq_vit_l.pth"
+msgstr "sam_hq_vit_l.pth"
+
+#: ../../source/sam_model.rst:54 ../../source/sam_model.rst:114
+msgid "5016M"
+msgstr "5016M"
+
+#: ../../source/sam_model.rst:55 ../../source/sam_model.rst:115
+msgid "2634M"
+msgstr "2634M"
+
+#: ../../source/sam_model.rst:56 ../../source/sam_model.rst:116
+msgid "1.3G"
+msgstr "1.3G"
+
+#: ../../source/sam_model.rst:60
+msgid "sam_hq_vit_b.pth"
+msgstr "sam_hq_vit_b.pth"
+
+#: ../../source/sam_model.rst:61
+msgid "3304M"
+msgstr "3304M"
+
+#: ../../source/sam_model.rst:62
+msgid "1762M"
+msgstr "1762M"
+
+#: ../../source/sam_model.rst:63
+msgid "379M"
+msgstr "379M"
+
+#: ../../source/sam_model.rst:67
+msgid "**sam_hq_vit_tiny.pth**"
+msgstr "**sam_hq_vit_tiny.pth**"
+
+#: ../../source/sam_model.rst:68
+msgid "598M"
+msgstr "598M"
+
+#: ../../source/sam_model.rst:69
+msgid "392M"
+msgstr "392M"
+
+#: ../../source/sam_model.rst:70
+msgid "43M"
+msgstr "43M"
+
+#: ../../source/sam_model.rst:74
+msgid "Mobile-SAM"
+msgstr "Mobile-SAM"
+
+#: ../../source/sam_model.rst:75
+msgid "**mobile_sam.pt**"
+msgstr "**mobile_sam.pt**"
+
+#: ../../source/sam_model.rst:76
+msgid "534M"
+msgstr "534M"
+
+#: ../../source/sam_model.rst:77
+msgid "390M"
+msgstr "390M"
+
+#: ../../source/sam_model.rst:78
+msgid "40M"
+msgstr "40M"
+
+#: ../../source/sam_model.rst:82
+msgid "Edge-SAM"
+msgstr "Edge-SAM"
+
+#: ../../source/sam_model.rst:83
+msgid "edge_sam.pth"
+msgstr "edge_sam.pth"
+
+#: ../../source/sam_model.rst:84 ../../source/sam_model.rst:91
+msgid "360M"
+msgstr "360M"
+
+#: ../../source/sam_model.rst:85 ../../source/sam_model.rst:92
+msgid "304M"
+msgstr "304M"
+
+#: ../../source/sam_model.rst:86 ../../source/sam_model.rst:93
+msgid "39M"
+msgstr "39M"
+
+#: ../../source/sam_model.rst:90
+msgid "edge_sam_3x.pth"
+msgstr "edge_sam_3x.pth"
+
+#: ../../source/sam_model.rst:97
+msgid "MedSAM"
+msgstr "MedSAM"
+
+#: ../../source/sam_model.rst:98
+msgid "sam-med2d_b.pth"
+msgstr "sam-med2d_b.pth"
+
+#: ../../source/sam_model.rst:99
+msgid "1500M"
+msgstr "1500M"
+
+#: ../../source/sam_model.rst:100
+msgid "1050M"
+msgstr "1050M"
+
+#: ../../source/sam_model.rst:101
+msgid "2.4G"
+msgstr "2.4G"
+
+#: ../../source/sam_model.rst:105
+msgid "SAM"
+msgstr "SAM"
+
+#: ../../source/sam_model.rst:106
+msgid "sam_vit_h_4b8939.pth"
+msgstr "sam_vit_h_4b8939.pth"
+
+#: ../../source/sam_model.rst:107
+msgid "6462M"
+msgstr "6462M"
+
+#: ../../source/sam_model.rst:113
+msgid "sam_vit_l_0b3195.pth"
+msgstr "sam_vit_l_0b3195.pth"
+
+#: ../../source/sam_model.rst:120
+msgid "sam_vit_b_01ec64.pth"
+msgstr "sam_vit_b_01ec64.pth"
+
+#: ../../source/sam_model.rst:121
+msgid "3302M"
+msgstr "3302M"
+
+#: ../../source/sam_model.rst:122
+msgid "1760M"
+msgstr "1760M"
+
+#: ../../source/sam_model.rst:123
+msgid "375M"
+msgstr "375M"
+
+#: ../../source/sam_model.rst:127
+msgid "SAM2"
+msgstr "SAM2"
+
+#: ../../source/sam_model.rst:128
+msgid "sam2_hiera_large.pt"
+msgstr "sam2_hiera_large.pt"
+
+#: ../../source/sam_model.rst:129
+msgid "3252M"
+msgstr "3252M"
+
+#: ../../source/sam_model.rst:130
+msgid "2008M"
+msgstr "2008M"
+
+#: ../../source/sam_model.rst:131 ../../source/sam_model.rst:159
+msgid "900M"
+msgstr "900M"
+
+#: ../../source/sam_model.rst:135
+msgid "sam2_hiera_base_plus.pt"
+msgstr "sam2_hiera_base_plus.pt"
+
+#: ../../source/sam_model.rst:136
+msgid "1992M"
+msgstr "1992M"
+
+#: ../../source/sam_model.rst:137
+msgid "1666M"
+msgstr "1666M"
+
+#: ../../source/sam_model.rst:138 ../../source/sam_model.rst:166
+msgid "324M"
+msgstr "324M"
+
+#: ../../source/sam_model.rst:142
+msgid "sam2_hiera_small.pt"
+msgstr "sam2_hiera_small.pt"
+
+#: ../../source/sam_model.rst:143
+msgid "1522M"
+msgstr "1522M"
+
+#: ../../source/sam_model.rst:144
+msgid "1226M"
+msgstr "1226M"
+
+#: ../../source/sam_model.rst:145 ../../source/sam_model.rst:173
+msgid "185M"
+msgstr "185M"
+
+#: ../../source/sam_model.rst:149
+msgid "sam2_hiera_tiny.pt"
+msgstr "sam2_hiera_tiny.pt"
+
+#: ../../source/sam_model.rst:150
+msgid "1504M"
+msgstr "1504M"
+
+#: ../../source/sam_model.rst:151
+msgid "1196M"
+msgstr "1196M"
+
+#: ../../source/sam_model.rst:152 ../../source/sam_model.rst:180
+msgid "156M"
+msgstr "156M"
+
+#: ../../source/sam_model.rst:155
+msgid "SAM2.1"
+msgstr "SAM2.1"
+
+#: ../../source/sam_model.rst:156
+msgid "sam2.1_hiera_large.pt"
+msgstr "sam2.1_hiera_large.pt"
+
+#: ../../source/sam_model.rst:157
+msgid "3328M"
+msgstr "3328M"
+
+#: ../../source/sam_model.rst:158
+msgid "2266M"
+msgstr "2266M"
+
+#: ../../source/sam_model.rst:163
+msgid "sam2.1_hiera_base_plus.pt"
+msgstr "sam2.1_hiera_base_plus.pt"
+
+#: ../../source/sam_model.rst:164
+msgid "2032M"
+msgstr "2032M"
+
+#: ../../source/sam_model.rst:165
+msgid "1682M"
+msgstr "1682M"
+
+#: ../../source/sam_model.rst:170
+msgid "sam2.1_hiera_small.pt"
+msgstr "sam2.1_hiera_small.pt"
+
+#: ../../source/sam_model.rst:171
+msgid "1736M"
+msgstr "1736M"
+
+#: ../../source/sam_model.rst:172
+msgid "1268M"
+msgstr "1268M"
+
+#: ../../source/sam_model.rst:177
+msgid "sam2.1_hiera_tiny.pt"
+msgstr "sam2.1_hiera_tiny.pt"
+
+#: ../../source/sam_model.rst:178
+msgid "1574M"
+msgstr "1574M"
+
+#: ../../source/sam_model.rst:179
+msgid "1194M"
+msgstr "1194M"
+
+#: ../../source/sam_model.rst:183
+msgid "SAM3"
+msgstr "SAM3"
+
+#: ../../source/sam_model.rst:184
+msgid "sam3.pt"
+msgstr "sam3.pt"
+
+#: ../../source/sam_model.rst:185 ../../source/sam_model.rst:186
+msgid "**8600M**"
+msgstr "**8600M**"
+
+#: ../../source/sam_model.rst:187
+msgid "3.5G"
+msgstr "3.5G"
+
+#: ../../source/sam_model.rst:191
+msgid ""
+"If you are running ISAT on a cpu, it is recommended to use the "
+"**sam_hq_vit_tiny.pth** or **mobile_sam.pt** model."
+msgstr ""
+"CPU에서 ISAT을 실행하는 경우 **sam_hq_vit_tiny.pth** 또는 **mobile_sam.pt** 모델을 사용하는 것이"
+" 좋습니다."
+
+#: ../../source/sam_model.rst:193
+msgid ""
+"Since v1.5.1, you can try disabling the ``video segmentation`` feature in "
+"the settings interface if you encounter insufficient VRAM."
+msgstr ""
+"v1.5.1부터 VRAM이 부족할 경우 설정 인터페이스에서 ``video segmentation`` 기능을 비활성화해 볼 수 있습니다."
+
+#: ../../source/sam_model.rst:195
+msgid ""
+"After disabling the ``video segmentation`` feature, SAM3 requires only 6GB "
+"of VRAM to run."
+msgstr "``video segmentation`` 기능을 비활성화한 후 SAM3을 실행하려면 6GB의 VRAM만 필요합니다."
+
+#: ../../source/sam_model.rst:198
+msgid "4. Use fine tuned model"
+msgstr "4. 미세 조정된 모델 사용"
+
+#: ../../source/sam_model.rst:200
+msgid ""
+"Click the ``Open`` button in the the model manager interface to select the "
+"fine-tuned sam model."
+msgstr "모델 관리자 인터페이스에서 ``Open`` 버튼을 클릭하여 미세 조정된 SAM 모델을 선택하세요."
+
+#: ../../source/sam_model.rst:-1
+msgid "use_fine_tuned_model.png"
+msgstr "use_fine_tuned_model.png"
+
+#: ../../source/sam_model.rst:205
+msgid ""
+"The supported fine-tuned models: **sam**, **sam2**, **sam2.1**, **sam3**, "
+"**mobile-sam**, **edge-sam**, **sam-hq** and **sam-med2d**."
+msgstr ""
+"지원되는 미세 조정 모델: **sam**, **SAM2**, **SAM2.1**, **SAM3**, **mobile-sam**, "
+"**edge-sam**, **sam-hq** 및 **sam-med2d**."

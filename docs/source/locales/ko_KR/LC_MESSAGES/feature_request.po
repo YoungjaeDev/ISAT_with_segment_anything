@@ -1,0 +1,83 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Shuwei Ji and Hongyuan Zhang
+# This file is distributed under the same license as the ISAT-SAM package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ISAT-SAM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-06 21:21+0900\n"
+"PO-Revision-Date: 2026-03-06 21:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko_KR <LL@li.org>\n"
+"Language: ko_KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../source/feature_request.rst:2
+msgid "Feature request"
+msgstr "기능 요청"
+
+#: ../../source/feature_request.rst:4
+msgid "Thank you for helping us improve ISAT！"
+msgstr "ISAT 개선에 도움을 주셔서 감사합니다!"
+
+#: ../../source/feature_request.rst:7
+msgid "1. Submit a feature request"
+msgstr "1. 기능 요청 제출"
+
+#: ../../source/feature_request.rst:9
+msgid "Feature requests are welcome."
+msgstr "기능 요청을 환영합니다."
+
+#: ../../source/feature_request.rst:11
+msgid "Before submit, you should:"
+msgstr "제출하기 전에 다음을 수행해야 합니다."
+
+#: ../../source/feature_request.rst:13
+msgid ""
+"**Take a moment to find out whether your idea fits with the scope and aims "
+"of ISAT.**"
+msgstr "**잠시 시간을 내어 귀하의 아이디어가 ISAT의 범위 및 목표에 적합한지 알아보세요.**"
+
+#: ../../source/feature_request.rst:14
+msgid "**Make sure there are no simple alternatives.**"
+msgstr "**단순한 대안이 없는지 확인하세요.**"
+
+#: ../../source/feature_request.rst:15
+msgid ""
+"**Finally, You should have a strong case to convince ISAT’s developers of "
+"the merits of this feature.**"
+msgstr "**마지막으로, ISAT 개발자에게 이 기능의 장점을 설득할 수 있는 강력한 사례가 있어야 합니다.**"
+
+#: ../../source/feature_request.rst:17
+msgid ""
+"You can create a new issue to submit a feature request via the `GitHub issue"
+" <https://github.com/yatengLG/ISAT_with_segment_anything/issues>`_."
+msgstr ""
+"새로운 이슈를 생성하여 `GitHub issue "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/issues>`_ 을 통해 기능 "
+"요청을 제출할 수 있습니다."
+
+#: ../../source/feature_request.rst:21
+msgid ""
+"If you just have a simple idea, you can also exchange views in the "
+"`discussion hub "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/discussions>`_ "
+"before request feature."
+msgstr ""
+"간단한 아이디어만 있으시면 `discussion hub "
+"<https://github.com/yatengLG/ISAT_with_segment_anything/discussions>`_ 사전 요청"
+" 기능에서 의견을 교환하실 수도 있습니다."
+
+#: ../../source/feature_request.rst:24
+msgid "2. Template"
+msgstr "2. 템플릿"
+
+#: ../../source/feature_request.rst:26
+msgid "Please create a feature request using the provided template."
+msgstr "제공된 템플릿을 사용하여 기능 요청을 작성하세요."
