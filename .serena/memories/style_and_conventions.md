@@ -1,0 +1,22 @@
+# Style and conventions
+
+- Language/runtime: Python desktop application using PyQt5.
+- Existing source style is pragmatic and mixed-language:
+  - many file headers/comments are in Chinese
+  - many public docstrings are in English
+  - type hints are used in some core modules but are not universal
+- Architectural split:
+  - `ISAT/ui/` holds designer/generated UI definitions
+  - `ISAT/widgets/` holds behavior and application logic
+  - avoid moving logic into generated UI files unless absolutely necessary
+- Configuration/storage patterns:
+  - YAML for software/category config (`software.yaml`, `isat.yaml`)
+  - JSON for saved annotations (`ISAT` description marker in annotation files)
+- Translation-sensitive files:
+  - preserve commands, code blocks, URLs, image paths, and Sphinx/Markdown syntax exactly
+  - translate surrounding prose naturally instead of literal word-by-word conversion
+  - keep model/product names such as `SAM`, `SAM2`, `SAM3`, `MobileSAM`, `EdgeSAM`, `MedSAM`, `plugin`, `checkpoint` as technical terms when that reads better
+- Editing policy for this workspace:
+  - keep diffs surgical and directly tied to the request
+  - avoid drive-by refactors
+  - for new docstrings use English; for new code comments use Korean if comments are needed

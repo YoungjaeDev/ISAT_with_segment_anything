@@ -1,0 +1,27 @@
+# ISAT_with_segment_anything overview
+
+- Purpose: desktop image-segmentation annotation tool built around the Segment Anything family.
+- Product name/package: `isat-sam`.
+- Runtime: Python 3.8+ desktop app with PyQt5.
+- Main entrypoints:
+  - root `main.py` imports and runs `ISAT.main:main`
+  - package console entrypoint `isat-sam=ISAT.main:main` from `setup.py`
+- Core package layout:
+  - `ISAT/annotation.py`: annotation data model and JSON save/load
+  - `ISAT/configs.py`: YAML config paths, load/save helpers, UI enums
+  - `ISAT/segment_any/`: SAM/SAM2/SAM3/MobileSAM/EdgeSAM/MedSAM integrations and model registry
+  - `ISAT/widgets/`: application logic and custom widgets; `mainwindow.py` is the main orchestration layer
+  - `ISAT/ui/`: Qt Designer `.ui` files and generated Python UI modules
+  - `ISAT/utils/`: small helpers such as DICOM loading
+- Docs layout:
+  - root `README.md`: English project overview
+  - root `README-cn.md`: Chinese README
+  - `docs/source/*.rst`: Sphinx source docs
+  - `docs/source/locales/zh_CN`: existing gettext translation catalog for Chinese
+- Tests/CI:
+  - no obvious repo-level pytest or lint configuration
+  - `test/` currently contains utility/demo scripts, not a clear automated suite
+  - GitHub Actions currently publishes the package on release (`.github/workflows/python-publish.yml`)
+- Platform notes:
+  - repo includes Windows-oriented scripts such as `build_exe.bat`
+  - Serena project metadata is stored under `.serena/` and should not be edited casually
