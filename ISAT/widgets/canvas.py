@@ -1541,7 +1541,6 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
     def export_overlay_image(self, save_path):
         """Export current image with polygon annotations as colored overlay."""
-        import cv2
         overlay = self.image_data.copy()
         alpha = self.mainwindow.cfg["software"]["polygon_alpha_no_hover"]
 
