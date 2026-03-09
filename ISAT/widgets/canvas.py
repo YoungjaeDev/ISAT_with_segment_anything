@@ -1539,6 +1539,31 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                 return
             self.repaint_line_item.removePoint(len(self.repaint_line_item.points) - 2)
 
+    def export_overlay_image(self, save_path):
+        """Export current image with polygon annotations as colored overlay."""
+        import cv2
+        overlay = self.image_data.copy()
+        alpha = self.mainwindow.cfg["software"]["polygon_alpha_no_hover"]
+
+        for item in self.items():
+            if not isinstance(item, Polygon) or item.is_drawing:
+                continue
+            color_hex = self.mainwindow.category_color_dict.get(item.category, "#6F737A")
+            r, g, b = int(color_hex[1:3], 16), int(color_hex[3:5], 16), int(color_hex[5:7], 16)
+            color_bgr = (b, g, r)
+
+            points = []
+            for pt in item.points:
+                p = pt + item.pos()
+                points.append([int(p.x()), int(p.y())])
+            pts = np.array([points], dtype=np.int32)
+
+            mask = np.zeros_like(overlay)
+            cv2.fillPoly(mask, pts, color_bgr)
+            overlay = cv2.addWeighted(overlay, 1, mask, alpha, 0)
+
+        cv2.imwrite(save_path, cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR))
+
 
 class AnnotationView(QtWidgets.QGraphicsView):
     def __init__(self, parent=None):

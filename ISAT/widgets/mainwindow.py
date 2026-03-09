@@ -2213,6 +2213,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             return
 
+    def export_overlay(self):
+        """Export current image with annotation overlay as PNG."""
+        if self.current_index is None or not self.files_list:
+            return
+        if self.scene.image_data is None:
+            return
+
+        current_image = self.files_list[self.current_index]
+        image_name = os.path.splitext(current_image)[0] + "_overlay.png"
+        overlay_dir = os.path.join(self.image_root, "overlays")
+        os.makedirs(overlay_dir, exist_ok=True)
+        save_path = os.path.join(overlay_dir, image_name)
+
+        self.scene.export_overlay_image(save_path)
+        self.statusbar.showMessage(
+            "Save overlay image to {}".format(save_path), 3000
+        )
+
     def save_cfg(self, config_file: str):
         """
         Save categories config to disk.
@@ -2387,6 +2405,7 @@ Categories=Development;System;
         self.actionWindow_shot.triggered.connect(
             functools.partial(self.screen_shot, "window")
         )
+        self.actionExportOverlay.triggered.connect(self.export_overlay)
 
         self.actionModel_manage.triggered.connect(self.model_manage)
         self.actionModel_manage.setStatusTip(CHECKPOINT_PATH)
