@@ -36,19 +36,31 @@ napoleon_google_docstring = True
 templates_path = ['_templates']
 exclude_patterns = []
 
-_rtd_language = os.environ.get('READTHEDOCS_LANGUAGE', '').lower()
-if _rtd_language in {'ko', 'ko-kr'}:
-    language = 'ko_KR'
-elif _rtd_language in {'zh-cn', 'zh_cn'}:
-    language = 'zh_CN'
-elif _rtd_language:
-    language = _rtd_language.replace('-', '_')
-else:
-    language = 'en'
+def _normalize_language_tag(value):
+    if not value:
+        return 'en'
+
+    normalized = value.lower().replace('_', '-')
+    if normalized in {'ko', 'ko-kr'}:
+        return 'ko_KR'
+    if normalized in {'zh-cn', 'zh_cn'}:
+        return 'zh_CN'
+    return value.replace('-', '_')
+
+
+language = _normalize_language_tag(os.environ.get('READTHEDOCS_LANGUAGE', 'en'))
 
 locale_dirs = ['locales/']
 gettext_compact = False
 gettext_uuid = True
+
+
+def _on_config_inited(app, config):
+    config.language = _normalize_language_tag(config.language)
+
+
+def setup(app):
+    app.connect('config-inited', _on_config_inited)
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
