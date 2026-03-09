@@ -1547,9 +1547,9 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         for item in self.items():
             if not isinstance(item, Polygon) or item.is_drawing:
                 continue
-            color_hex = self.mainwindow.category_color_dict.get(item.category, "#6F737A")
-            r, g, b = int(color_hex[1:3], 16), int(color_hex[3:5], 16), int(color_hex[5:7], 16)
-            color_bgr = (b, g, r)
+            # polygon 객체의 실제 표시 색상 사용
+            color = item.color
+            color_bgr = (color.blue(), color.green(), color.red())
 
             points = []
             for pt in item.points:
