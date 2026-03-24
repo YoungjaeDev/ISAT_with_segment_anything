@@ -12,6 +12,8 @@
   - `ISAT/segment_any/`: SAM/SAM2/SAM3/MobileSAM/EdgeSAM/MedSAM integrations and model registry
   - `ISAT/widgets/`: application logic and custom widgets; `mainwindow.py` is the main orchestration layer
   - `ISAT/ui/`: Qt Designer `.ui` files and generated Python UI modules
+  - `icons/`: SVG icons (Chinese_English naming, e.g. `保存_save.svg`)
+  - `ISAT/icons.qrc`: Qt resource file; `ISAT/icons_rc.py`: compiled resources (regenerate with pyrcc_main after icon changes)
   - `ISAT/utils/`: small helpers such as DICOM loading
 - Docs layout:
   - root `README.md`: English project overview

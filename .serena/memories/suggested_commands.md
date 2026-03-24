@@ -26,6 +26,9 @@
 - `git status --short`
 - `rg "pattern"`
 
+## Icon resources
+- `uv run python -m PyQt5.pyrcc_main ISAT/icons.qrc -o ISAT/icons_rc.py`  (recompile after adding/changing icons)
+
 ## Packaging / release-oriented scripts
 - `build_exe.bat`
 - `python setup.py sdist`
