@@ -9,6 +9,10 @@ from ISAT.annotation import Object
 from ISAT.configs import STATUSMode
 
 
+# ============================================================
+#  Prompt point (SAM point prompt visual)
+# ============================================================
+
 class PromptPoint(QtWidgets.QGraphicsPathItem):
     """SAM prompt point."""
 
@@ -26,41 +30,38 @@ class PromptPoint(QtWidgets.QGraphicsPathItem):
         self.setPos(pos)
 
 
-class Vertex(QtWidgets.QGraphicsPathItem):
-    """Vertex of polygon."""
+# ============================================================
+#  Vertex hierarchy
+# ============================================================
 
-    def __init__(self, polygon, color, nohover_size=2):
-        super(Vertex, self).__init__()
-        self.polygon = polygon
-        self.color = color
+class BaseVertex(QtWidgets.QGraphicsPathItem):
+    """Base class for all draggable handle vertices.
+
+    Provides common appearance (ellipse shape, color, brush/pen),
+    scene-boundary clamping, and selection-highlight behavior.
+
+    Subclasses:
+        PolygonVertex — selectable, with hover effects for polygon editing.
+        LineVertex    — non-selectable, for repaint guide line.
+        PromptRectVertex    — non-selectable, for SAM box prompt.
+    """
+
+    def __init__(self, parent_shape, color, nohover_size=2, selectable=True):
+        super().__init__()
+        self.parent_shape = parent_shape
+        self.color = QtGui.QColor(color)
         self.color.setAlpha(255)
         self.nohover_size = nohover_size
         self.hover_size = self.nohover_size + 2
         self.line_width = 0
 
-        self.nohover = QtGui.QPainterPath()
-        self.nohover.addEllipse(
-            QtCore.QRectF(
-                -self.nohover_size // 2,
-                -self.nohover_size // 2,
-                self.nohover_size,
-                self.nohover_size,
-            )
-        )
-        self.hover = QtGui.QPainterPath()
-        self.hover.addEllipse(
-            QtCore.QRectF(
-                -self.hover_size // 2,
-                -self.hover_size // 2,
-                self.hover_size,
-                self.hover_size,
-            )
-        )
+        self.nohover_path = self._make_ellipse(self.nohover_size)
+        self.hover_path = self._make_ellipse(self.hover_size)
 
-        self.setPath(self.nohover)
+        self.setPath(self.nohover_path)
         self.setBrush(self.color)
         self.setPen(QtGui.QPen(self.color, self.line_width))
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
+        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, selectable)
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True
@@ -68,7 +69,15 @@ class Vertex(QtWidgets.QGraphicsPathItem):
         self.setAcceptHoverEvents(True)
         self.setZValue(1e5)
 
+    @staticmethod
+    def _make_ellipse(size):
+        """Create a circle-shaped QPainterPath centred at origin."""
+        path = QtGui.QPainterPath()
+        path.addEllipse(QtCore.QRectF(-size // 2, -size // 2, size, size))
+        return path
+
     def setColor(self, color):
+        """Update the vertex colour."""
         self.color = QtGui.QColor(color)
         self.color.setAlpha(255)
         self.setPen(QtGui.QPen(self.color, self.line_width))
@@ -80,8 +89,7 @@ class Vertex(QtWidgets.QGraphicsPathItem):
         if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged:
             self.scene().mainwindow.actionDelete.setEnabled(self.isSelected())
             if self.isSelected():
-                selected_color = QtGui.QColor("#00A0FF")
-                self.setBrush(selected_color)
+                self.setBrush(QtGui.QColor("#00A0FF"))
             else:
                 self.color.setAlpha(255)
                 self.setBrush(self.color)
@@ -90,50 +98,152 @@ class Vertex(QtWidgets.QGraphicsPathItem):
             change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange
             and self.isEnabled()
         ):
-            # 限制顶点移动到图外
-            if value.x() < 0:
-                value.setX(0)
-            if value.x() > self.scene().width() - 1:
-                value.setX(self.scene().width() - 1)
-            if value.y() < 0:
-                value.setY(0)
-            if value.y() > self.scene().height() - 1:
-                value.setY(self.scene().height() - 1)
-            index = self.polygon.vertices.index(self)
-            self.polygon.movePoint(index, value)
+            value = self._clamp_to_scene(value)
+            index = self.parent_shape.vertices.index(self)
+            self.parent_shape.movePoint(index, value)
 
-        return super(Vertex, self).itemChange(change, value)
+        return super().itemChange(change, value)
+
+    def _clamp_to_scene(self, value):
+        """Constrain the vertex position to lie within the scene bounds."""
+        if value.x() < 0:
+            value.setX(0)
+        if value.x() > self.scene().width() - 1:
+            value.setX(self.scene().width() - 1)
+        if value.y() < 0:
+            value.setY(0)
+        if value.y() > self.scene().height() - 1:
+            value.setY(self.scene().height() - 1)
+        return value
+
+
+class PolygonVertex(BaseVertex):
+    """Vertex for polygon annotation — selectable with hover effects."""
+
+    def __init__(self, parent_shape, color, nohover_size=2):
+        super().__init__(parent_shape, color, nohover_size, selectable=True)
 
     def hoverEnterEvent(self, event: "QGraphicsSceneHoverEvent"):
         self.scene().hovered_vertex = self
-        if self.scene().mode == STATUSMode.CREATE:  # CREATE
+        if self.scene().mode == STATUSMode.CREATE:
             self.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
         else:  # EDIT, VIEW
             self.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor))
             if not self.isSelected():
                 self.setBrush(QtGui.QColor(255, 255, 255, 255))
-            self.setPath(self.hover)
-        super(Vertex, self).hoverEnterEvent(event)
+            self.setPath(self.hover_path)
+        super().hoverEnterEvent(event)
 
     def hoverLeaveEvent(self, event: "QGraphicsSceneHoverEvent"):
         self.scene().hovered_vertex = None
         if not self.isSelected():
             self.color.setAlpha(255)
             self.setBrush(self.color)
-        self.setPath(self.nohover)
-        super(Vertex, self).hoverLeaveEvent(event)
+        self.setPath(self.nohover_path)
+        super().hoverLeaveEvent(event)
 
 
-class Polygon(QtWidgets.QGraphicsPolygonItem):
+class LineVertex(BaseVertex):
+    """Vertex for repaint guide line — non-selectable."""
+
+    def __init__(self, parent_shape, color, nohover_size=2):
+        super().__init__(parent_shape, color, nohover_size, selectable=False)
+
+
+class PromptRectVertex(BaseVertex):
+    """Vertex for SAM prompt rectangle — non-selectable."""
+
+    def __init__(self, parent_shape, color, nohover_size=2):
+        super().__init__(parent_shape, color, nohover_size, selectable=False)
+
+
+# ============================================================
+#  Shape mixin — points / vertices CRUD shared by Polygon, Line, PromptRect
+# ============================================================
+
+class BaseShape:
+    """Mixin providing point-list and vertex management for shapes.
+
+    Concrete classes must:
+      1. Inherit a QGraphicsItem subclass *and* BaseShape.
+      2. Call ``self._init_shape(vertex_cls)`` in ``__init__``.
+      3. Implement ``redraw()`` to re-render the shape from ``self.points``.
     """
-    Polygon.
+
+    def _init_shape(self, vertex_cls):
+        """Initialise the point list and vertex factory.
+
+        Arguments:
+            vertex_cls: A BaseVertex subclass used to create draggable handles.
+        """
+        self.points: list = []
+        self.vertices: list = []
+        self._vertex_cls = vertex_cls
+
+    # ---- point / vertex CRUD ------------------------------------------------
+
+    def addPoint(self, point: QtCore.QPointF):
+        """Append a point and its corresponding visual vertex to the scene."""
+        self.points.append(point)
+        vertex_size = self.scene().mainwindow.cfg["software"]["vertex_size"] * 2
+        vertex = self._vertex_cls(self, self.color, vertex_size)
+        self.scene().addItem(vertex)
+        self.vertices.append(vertex)
+        vertex.setPos(point)
+
+    def movePoint(self, index: int, point: QtCore.QPointF):
+        """Move the *index*-th point to a new scene position.
+
+        Calls ``redraw()`` and the ``_on_point_moved`` hook so subclasses
+        (e.g. Polygon) can add extra behaviour like real-time area updates.
+        """
+        if not 0 <= index < len(self.points):
+            return
+        self.points[index] = self.mapFromScene(point)
+        self.redraw()
+        self._on_point_moved(index, point)
+
+    def _on_point_moved(self, index: int, point: QtCore.QPointF):
+        """Hook invoked after every successful ``movePoint``.
+
+        Override in subclasses that need side-effects (area calculation,
+        dirty-state tracking, etc.).  The default implementation is a no-op.
+        """
+
+    def removePoint(self, index):
+        """Remove the *index*-th point and its vertex.  Returns the removed point."""
+        if not self.points:
+            return None
+        point = self.points.pop(index)
+        vertex = self.vertices.pop(index)
+        self.scene().removeItem(vertex)
+        del vertex
+        self.redraw()
+        return point
+
+    def delete(self):
+        """Remove all points and vertices (e.g. when discarding the shape)."""
+        self.points.clear()
+        while self.vertices:
+            vertex = self.vertices.pop()
+            self.scene().removeItem(vertex)
+            del vertex
+
+
+# ============================================================
+#  Polygon — full annotation shape
+# ============================================================
+
+class Polygon(QtWidgets.QGraphicsPolygonItem, BaseShape):
+    """
+    Polygon annotation.
 
     Attributes:
         line_width (int): The width of the edge.
         hover_alpha (int): The alpha value of the polygon when hovering.
         nohover_alpha (int): the alpha value of the polygon when nohovering.
         points (list): Record the point pos of the polygon.
-        vertices (list[Vertex]): Record the vertices of the polygon.
+        vertices (list[PolygonVertex]): Record the vertices of the polygon.
         is_drawing (bool): The flag to indicate if the polygon is drawing.
 
         category (str): The category of the polygon.
@@ -144,12 +254,12 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
     """
 
     def __init__(self):
-        super(Polygon, self).__init__(parent=None)
+        QtWidgets.QGraphicsPolygonItem.__init__(self, parent=None)
+        self._init_shape(PolygonVertex)
+
         self.line_width = 1
         self.hover_alpha = 150
         self.nohover_alpha = 80
-        self.points = []
-        self.vertices = []
         self.category = ""
         self.group = 0
         self.iscrowd = False
@@ -171,71 +281,25 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
         )
         self.setZValue(1e5)
 
-    def addPoint(self, point: QtCore.QPointF):
-        """
-        Add a vertex to the polygon.
+    # ---- point-moved hook ----------------------------------------------------
 
-        Arguments:
-            point (QtCore.QPointF): The vertex to add.
-        """
-        self.points.append(point)
-        vertex = Vertex(
-            self, self.color, self.scene().mainwindow.cfg["software"]["vertex_size"] * 2
-        )
-        # 添加路径点
-        self.scene().addItem(vertex)
-        self.vertices.append(vertex)
-        vertex.setPos(point)
-
-    def movePoint(self, index: int, point: QtCore.QPointF):
-        """
-        Move the point at the given index to the given point. The point is saved in self.points.
-
-        Arguments:
-            index (int): The index of the vertex to move.
-            point (QtCore.QPointF): The point to move to.
-        """
-        if not 0 <= index < len(self.points):
-            return
-        self.points[index] = self.mapFromScene(point)
-
-        self.redraw()
+    def _on_point_moved(self, index: int, point: QtCore.QPointF):
+        """Polygon-specific side-effects after a vertex is dragged."""
         if self.scene().mainwindow.cfg["software"]["real_time_area"]:
             self.area = self.calculate_area()
-        if self.scene().mainwindow.load_finished and not self.is_drawing and self.scene().mode != STATUSMode.REPAINT:
+        if (
+            self.scene().mainwindow.load_finished
+            and not self.is_drawing
+            and self.scene().mode != STATUSMode.REPAINT
+        ):
             self.scene().mainwindow.set_saved_state(False)
 
-    def removePoint(self, index):
-        """
-        Remove a vertex from the polygon.
-
-        Arguments:
-            index (int): The index of the vertex to remove.
-        """
-        if not self.points:
-            return
-        point = self.points.pop(index)
-        vertex = self.vertices.pop(index)
-        self.scene().removeItem(vertex)
-        del vertex
-        self.redraw()
-        return point
-
-    def delete(self):
-        """Delete the polygon."""
-        self.points.clear()
-        while self.vertices:
-            vertex = self.vertices.pop()
-            self.scene().removeItem(vertex)
-            del vertex
+    # ---- vertex-only move (used when the whole polygon is dragged) -----------
 
     def moveVertex(self, index, point):
         """
-        Move the vertex at the given index to the given point. The vertex is saved in self.vertices.
-
-        Arguments:
-            index (int): The index of the vertex to move.
-            point (QtCore.QPointF): The point to move to.
+        Move the vertex at the given index to the given point.
+        The vertex position is updated directly without going through movePoint.
         """
         if not 0 <= index < len(self.vertices):
             return
@@ -244,12 +308,16 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
         vertex.setPos(point)
         vertex.setEnabled(True)
 
-    def itemChange(self, change: "QGraphicsItem.GraphicsItemChange", value: typing.Any):
+    # ---- Qt item events ------------------------------------------------------
+
+    def itemChange(
+        self, change: "QGraphicsItem.GraphicsItemChange", value: typing.Any
+    ):
         if (
             change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged
             and not self.is_drawing
             and self.scene().mode != STATUSMode.CREATE
-        ):  # 选中改变
+        ):
             if self.isSelected():
                 color = QtGui.QColor("#00A0FF")
                 color.setAlpha(self.hover_alpha)
@@ -260,13 +328,11 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
                 self.setBrush(self.color)
                 if self in self.scene().selected_polygons_list:
                     self.scene().selected_polygons_list.remove(self)
-            self.scene().mainwindow.annos_dock_widget.set_selected(
-                self
-            )  # 更新label面板
+            self.scene().mainwindow.annos_dock_widget.set_selected(self)
 
         if (
             change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange
-        ):  # ItemPositionHasChanged
+        ):
             if self.is_drawing:
                 value = 0
             else:
@@ -297,25 +363,27 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
             and self.isSelected()
         ):
             self.setSelected(not self.is_drawing)
-        return super(Polygon, self).itemChange(change, value)
+        return super().itemChange(change, value)
 
     def hoverEnterEvent(self, event: "QGraphicsSceneHoverEvent"):
         if not self.is_drawing and not self.isSelected():
             self.color.setAlpha(self.hover_alpha)
             self.setBrush(self.color)
-        super(Polygon, self).hoverEnterEvent(event)
+        super().hoverEnterEvent(event)
 
     def hoverLeaveEvent(self, event: "QGraphicsSceneHoverEvent"):
         if not self.is_drawing and not self.isSelected():
             self.color.setAlpha(self.nohover_alpha)
             self.setBrush(self.color)
-        super(Polygon, self).hoverLeaveEvent(event)
+        super().hoverLeaveEvent(event)
 
     def mouseDoubleClickEvent(self, event: "QGraphicsSceneMouseEvent"):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self.scene().mainwindow.category_edit_widget.polygons = [self]
             self.scene().mainwindow.category_edit_widget.load_cfg()
             self.scene().mainwindow.category_edit_widget.show()
+
+    # ---- rendering -----------------------------------------------------------
 
     def redraw(self):
         if len(self.points) < 1:
@@ -336,6 +404,8 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
             vertex.setPen(QtGui.QPen(vertex_color, self.line_width))
             vertex.setBrush(vertex_color)
 
+    # ---- lifecycle -----------------------------------------------------------
+
     def set_drawed(
         self,
         category: str,
@@ -347,14 +417,6 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
     ):
         """
         Set attributes for polygon and set is_drawing attribute to False.
-
-        Arguments:
-            category: category of the polygon.
-            group: group of the polygon.
-            iscrowd: whether the polygon is crowd.
-            note: note of the polygon.
-            color: color of the polygon.
-            layer: layer of the polygon in scene.
         """
         self.is_drawing = False
         self.category = category
@@ -379,11 +441,13 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
         for vertex in self.vertices:
             vertex.setColor(color)
 
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable,
-                        not self.scene().mainwindow.annos_dock_widget.checkBox_lock.isChecked())
+        self.setFlag(
+            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable,
+            not self.scene().mainwindow.annos_dock_widget.checkBox_lock.isChecked(),
+        )
 
     def calculate_area(self) -> float:
-        """calculate area of polygon"""
+        """Calculate area of polygon using the shoelace formula."""
         area = 0
         num_points = len(self.points)
         for i in range(num_points):
@@ -393,12 +457,11 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
             area += d
         return abs(area) / 2
 
+    # ---- serialisation -------------------------------------------------------
+
     def load_object(self, obj):
         """
-        load attributes from Object of Annotation.
-
-        Arguments:
-            obj (Object): Object of Annotation.
+        Load attributes from an Annotation Object.
         """
         segmentation = obj.segmentation
         for x, y in segmentation:
@@ -412,11 +475,11 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
             obj.note,
             QtGui.QColor(color),
             obj.layer,
-        )  # ...
+        )
         self.area = obj.area
 
     def to_object(self) -> Object:
-        """Convert to Object of Annotation."""
+        """Convert to an Annotation Object for serialisation."""
         if self.is_drawing:
             return None
         segmentation = []
@@ -447,130 +510,23 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
         return object
 
 
-class LineVertex(QtWidgets.QGraphicsPathItem):
-    """
-    The vertex of a Line for repaint mode.
-    """
+# ============================================================
+#  Line — repaint-mode guide line
+# ============================================================
 
-    def __init__(self, line, color, nohover_size=2):
-        super(LineVertex, self).__init__()
-        self.line = line
-        self.color = color
-        self.color.setAlpha(255)
-        self.nohover_size = nohover_size
-        self.hover_size = self.nohover_size + 2
-        self.line_width = 0
-
-        self.nohover = QtGui.QPainterPath()
-        self.nohover.addEllipse(
-            QtCore.QRectF(
-                -self.nohover_size // 2,
-                -self.nohover_size // 2,
-                self.nohover_size,
-                self.nohover_size,
-            )
-        )
-        self.hover = QtGui.QPainterPath()
-        self.hover.addEllipse(
-            QtCore.QRectF(
-                -self.hover_size // 2,
-                -self.hover_size // 2,
-                self.hover_size,
-                self.hover_size,
-            )
-        )
-
-        self.setPath(self.nohover)
-        self.setBrush(self.color)
-        self.setPen(QtGui.QPen(self.color, self.line_width))
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
-        self.setFlag(
-            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True
-        )
-        self.setAcceptHoverEvents(True)
-        self.setZValue(1e5)
-
-    def itemChange(
-        self, change: "QtWidgets.QGraphicsItem.GraphicsItemChange", value: typing.Any
-    ):
-        if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged:
-            self.scene().mainwindow.actionDelete.setEnabled(self.isSelected())
-            if self.isSelected():
-                selected_color = QtGui.QColor("#00A0FF")
-                self.setBrush(selected_color)
-            else:
-                self.color.setAlpha(255)
-                self.setBrush(self.color)
-
-        if (
-            change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange
-            and self.isEnabled()
-        ):
-            # 限制顶点移动到图外
-            if value.x() < 0:
-                value.setX(0)
-            if value.x() > self.scene().width() - 1:
-                value.setX(self.scene().width() - 1)
-            if value.y() < 0:
-                value.setY(0)
-            if value.y() > self.scene().height() - 1:
-                value.setY(self.scene().height() - 1)
-            index = self.line.vertices.index(self)
-            self.line.movePoint(index, value)
-
-        return super(LineVertex, self).itemChange(change, value)
-
-
-class Line(QtWidgets.QGraphicsPathItem):
-    """
-    The guideline for repaint mode.
-    """
+class Line(QtWidgets.QGraphicsPathItem, BaseShape):
+    """Visual guide line shown during repaint mode."""
 
     def __init__(self):
-        super().__init__(parent=None)
+        QtWidgets.QGraphicsPathItem.__init__(self, parent=None)
+        self._init_shape(LineVertex)
+
         self.line_width = 1
-        # self.hover_alpha = 150
-        # self.nohover_alpha = 80
-        self.points = []
-        self.vertices = []
         self.color = QtGui.QColor("#ff0000")
         pen = QtGui.QPen(self.color, self.line_width)
         pen.setStyle(QtCore.Qt.PenStyle.DotLine)
         self.setPen(pen)
         self.setZValue(1e5)
-
-    def addPoint(self, point):
-        self.points.append(point)
-        vertex = LineVertex(
-            self, self.color, self.scene().mainwindow.cfg["software"]["vertex_size"] * 2
-        )
-        # 添加路径点
-        self.scene().addItem(vertex)
-        self.vertices.append(vertex)
-        vertex.setPos(point)
-
-    def movePoint(self, index, point):
-        if not 0 <= index < len(self.points):
-            return
-        self.points[index] = self.mapFromScene(point)
-        self.redraw()
-
-    def removePoint(self, index):
-        if not self.points:
-            return
-        self.points.pop(index)
-        vertex = self.vertices.pop(index)
-        self.scene().removeItem(vertex)
-        del vertex
-        self.redraw()
-
-    def delete(self):
-        self.points.clear()
-        while self.vertices:
-            vertex = self.vertices.pop()
-            self.scene().removeItem(vertex)
-            del vertex
 
     def redraw(self):
         if len(self.points) < 1:
@@ -585,128 +541,23 @@ class Line(QtWidgets.QGraphicsPathItem):
         self.setPath(line_path)
 
 
-class RectVertex(QtWidgets.QGraphicsPathItem):
-    """
-    The vertex of the prompt rect for sam box prompt.
-    """
+# ============================================================
+#  PromptRect — SAM box-prompt rectangle
+# ============================================================
 
-    def __init__(self, rect, color, nohover_size=2):
-        super(RectVertex, self).__init__()
-        self.rect = rect
-        self.color = color
-        self.color.setAlpha(255)
-        self.nohover_size = nohover_size
-        self.hover_size = self.nohover_size + 2
-        self.line_width = 0
-
-        self.nohover = QtGui.QPainterPath()
-        self.nohover.addEllipse(
-            QtCore.QRectF(
-                -self.nohover_size // 2,
-                -self.nohover_size // 2,
-                self.nohover_size,
-                self.nohover_size,
-            )
-        )
-        self.hover = QtGui.QPainterPath()
-        self.hover.addEllipse(
-            QtCore.QRectF(
-                -self.hover_size // 2,
-                -self.hover_size // 2,
-                self.hover_size,
-                self.hover_size,
-            )
-        )
-
-        self.setPath(self.nohover)
-        self.setBrush(self.color)
-        self.setPen(QtGui.QPen(self.color, self.line_width))
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
-        self.setFlag(
-            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True
-        )
-        self.setAcceptHoverEvents(True)
-        self.setZValue(1e5)
-
-    def itemChange(
-        self, change: "QtWidgets.QGraphicsItem.GraphicsItemChange", value: typing.Any
-    ):
-        if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged:
-            self.scene().mainwindow.actionDelete.setEnabled(self.isSelected())
-            if self.isSelected():
-                selected_color = QtGui.QColor("#00A0FF")
-                self.setBrush(selected_color)
-            else:
-                self.color.setAlpha(255)
-                self.setBrush(self.color)
-
-        if (
-            change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange
-            and self.isEnabled()
-        ):
-            # 限制顶点移动到图外
-            if value.x() < 0:
-                value.setX(0)
-            if value.x() > self.scene().width() - 1:
-                value.setX(self.scene().width() - 1)
-            if value.y() < 0:
-                value.setY(0)
-            if value.y() > self.scene().height() - 1:
-                value.setY(self.scene().height() - 1)
-            index = self.rect.vertices.index(self)
-            self.rect.movePoint(index, value)
-
-        return super(RectVertex, self).itemChange(change, value)
-
-
-class Rect(QtWidgets.QGraphicsRectItem):
-    """
-    The prompt rect for sam box prompt.
-    """
+class PromptRect(QtWidgets.QGraphicsRectItem, BaseShape):
+    """Visual rectangle for SAM box-prompt mode."""
 
     def __init__(self):
-        super().__init__(parent=None)
+        QtWidgets.QGraphicsRectItem.__init__(self, parent=None)
+        self._init_shape(PromptRectVertex)
+
         self.line_width = 1
-        self.points = []
-        self.vertices = []
         self.color = QtGui.QColor("#ff0000")
 
         pen = QtGui.QPen(self.color, self.line_width)
         pen.setStyle(QtCore.Qt.PenStyle.DotLine)
         self.setPen(pen)
-
-    def addPoint(self, point):
-        self.points.append(point)
-        vertex = RectVertex(
-            self, self.color, self.scene().mainwindow.cfg["software"]["vertex_size"] * 2
-        )
-        # 添加路径点
-        self.scene().addItem(vertex)
-        self.vertices.append(vertex)
-        vertex.setPos(point)
-
-    def movePoint(self, index, point):
-        if not 0 <= index < len(self.points):
-            return
-        self.points[index] = self.mapFromScene(point)
-        self.redraw()
-
-    def removePoint(self, index):
-        if not self.points:
-            return
-        self.points.pop(index)
-        vertex = self.vertices.pop(index)
-        self.scene().removeItem(vertex)
-        del vertex
-        self.redraw()
-
-    def delete(self):
-        self.points.clear()
-        while self.vertices:
-            vertex = self.vertices.pop()
-            self.scene().removeItem(vertex)
-            del vertex
 
     def redraw(self):
         if len(self.points) < 2:

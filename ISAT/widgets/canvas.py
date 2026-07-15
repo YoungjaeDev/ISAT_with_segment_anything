@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ISAT.configs import CONTOURMode, CONTOURMethod, DRAWMode, STATUSMode
 from ISAT.utils.dicom import load_dcm_as_image
-from ISAT.widgets.polygon import Line, Polygon, PromptPoint, Rect, Vertex
+from ISAT.widgets.polygon import Line, Polygon, PolygonVertex, PromptPoint, PromptRect
 
 
 class AnnotationScene(QtWidgets.QGraphicsScene):
@@ -26,7 +26,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         mask_item (QtWidgets.QGraphicsPixmapItem): SAM mask pixmap item.
         image_data (np.ndarray): Image data.
         current_graph (Polygon): The polygon being annotated.
-        prompt_box_item (Rect): The box for SAM box prompt.
+        prompt_box_item (PromptRect): The box for SAM box prompt.
         repaint_line_item (Line): The line for repaint mode.
         mode (STATUSMode): STATUSMode. eg: CREATE, VIEW, EDIT, REPAINT.
         draw_mode (ISAT.configs.DRAWMode): draw mode.eg:POLYGON, SEGMENTANYTHING_POINT, SEGMENTANYTHING_BOX
@@ -45,9 +45,9 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
         selected_polygons_list (list): The list of polygons selected.
 
-        repaint_start_vertex (Vertex): The start vertex for repaint.
-        repaint_end_vertex (Vertex): The end vertex for repaint.
-        hovered_vertex (Vertex): The hovered vertex for repaint.
+        repaint_start_vertex (PolygonVertex): The start vertex for repaint.
+        repaint_end_vertex (PolygonVertex): The end vertex for repaint.
+        hovered_vertex (PolygonVertex): The hovered vertex for repaint.
     """
 
     def __init__(self, mainwindow):
@@ -69,10 +69,10 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         self.prompt_point_items = []
 
         # for box prompt
-        self.prompt_box_item: Rect = None
+        self.prompt_box_item: PromptRect = None
 
         # for visual prompt
-        self.prompt_visual_current_item: Rect = None  # 当前正在绘制的矩形
+        self.prompt_visual_current_item: PromptRect = None  # 当前正在绘制的矩形
         self.prompt_visual_current_label: bool = True # 当前正在绘制的矩形类型
         self.prompt_visual_items = []   # 存储已添加的矩形item
         self.prompt_visual_labels = []  # 存储已添加的矩形类型
@@ -98,9 +98,9 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         #
         self.selected_polygons_list = list()
 
-        self.repaint_start_vertex = None
-        self.repaint_end_vertex = None
-        self.hovered_vertex: Vertex = None
+        self.repaint_start_vertex: PolygonVertex = None
+        self.repaint_end_vertex: PolygonVertex = None
+        self.hovered_vertex: PolygonVertex = None
 
     def load_image(self, image_path: str):
         """
@@ -362,7 +362,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             finally:
                 self.prompt_box_item = None
 
-        self.prompt_box_item = Rect()
+        self.prompt_box_item = PromptRect()
         self.prompt_box_item.setZValue(2)
         self.addItem(self.prompt_box_item)
 
@@ -381,7 +381,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             finally:
                 self.prompt_visual_current_item = None
 
-        self.prompt_visual_current_item = Rect()
+        self.prompt_visual_current_item = PromptRect()
         self.prompt_visual_current_item.setZValue(2)
         pen = QtGui.QPen(QtGui.QColor("#00ff00" if positive else "#ff0000"))
         pen.setStyle(QtCore.Qt.PenStyle.DotLine)
@@ -636,11 +636,11 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                 self.removeItem(item)
                 deleted_layer = item.zValue()
                 del item
-            elif isinstance(item, Vertex):
-                polygon = item.polygon
+            elif isinstance(item, PolygonVertex):
+                polygon = item.parent_shape
                 if polygon.vertices:
                     index = polygon.vertices.index(item)
-                    item.polygon.removePoint(index)
+                    item.parent_shape.removePoint(index)
                 else:
                     self.removeItem(item)
                     del item
@@ -945,7 +945,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                 # 结束repaint
                 if (
                     self.hovered_vertex is not None
-                    and self.hovered_vertex.polygon == self.repaint_start_vertex.polygon
+                    and self.hovered_vertex.parent_shape == self.repaint_start_vertex.parent_shape
                 ):
                     self.repaint_end_vertex = self.hovered_vertex
 
@@ -954,7 +954,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     # 添加结束点
                     self.repaint_line_item.addPoint(self.repaint_end_vertex.pos())
 
-                    repaint_polygon = self.repaint_start_vertex.polygon
+                    repaint_polygon = self.repaint_start_vertex.parent_shape
                     repaint_start_index = repaint_polygon.vertices.index(
                         self.repaint_start_vertex
                     )
