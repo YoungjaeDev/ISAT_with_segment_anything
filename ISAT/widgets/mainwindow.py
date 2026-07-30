@@ -168,7 +168,8 @@ class SegAnyThread(QThread):
 
     def _sam_encoder_local(self, image: np.ndarray):
         """Encode image via local SAM model."""
-        torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         with torch.inference_mode(), torch.autocast(
             self.mainwindow.segany.device,
             dtype=self.mainwindow.segany.model_dtype,
@@ -291,7 +292,8 @@ class SegAnyThread(QThread):
 
                     self.tag.emit(index, 1, "")  # 完成
 
-                    torch.cuda.empty_cache()
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
                 else:
                     self.tag.emit(index, 1, "")
 
@@ -519,8 +521,9 @@ class InitSegAnyThread(QThread):
                     pass
 
             # 确保所有 CUDA 操作完成后再释放缓存，释放 GIL 给主线程
-            torch.cuda.synchronize()
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+                torch.cuda.empty_cache()
 
             try:
                 self.mainwindow.segany = SegAny(
@@ -884,6 +887,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def SeganyEnabled(self):
         """If current image has cached feature map by SAM encoder thread, enable semi-automatic annotation."""
         if not self.use_segment_anything:
+            self.actionSegment_anything_point.setEnabled(False)
+            self.actionSegment_anything_box.setEnabled(False)
+            return
+
+        if self.segany is None:
             self.actionSegment_anything_point.setEnabled(False)
             self.actionSegment_anything_box.setEnabled(False)
             return

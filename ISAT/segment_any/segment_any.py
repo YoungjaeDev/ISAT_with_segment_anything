@@ -143,7 +143,8 @@ class SegAny:
             self.model_type = "vit_b"
             self.model_source = "sam_med2d"
 
-        torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print("  - device  : {}".format(self.device))
@@ -194,7 +195,8 @@ class SegAny:
         """
         self.predictor.reset_image()
         self.image = None
-        torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def predict_with_point_prompt(
         self, input_point: Union[list, np.ndarray], input_label: Union[list, np.ndarray]
@@ -232,7 +234,8 @@ class SegAny:
                 mask_input=mask_input[None, :, :],
                 multimask_output=False,
             )
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             return masks
 
     def predict_with_box_prompt(self, box: Union[list, np.ndarray]) -> torch.Tensor:
@@ -249,7 +252,8 @@ class SegAny:
                 box=box,
                 multimask_output=False,
             )
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             return masks
 
 
@@ -309,7 +313,8 @@ class SegAnyVideo:
                 print("SAM3 don`t support bfloat16.")
                 self.model_dtype = torch.float32
 
-        torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print("  - device  : {}".format(self.device))
