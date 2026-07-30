@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ISAT.configs import CONTOURMode, CONTOURMethod, DRAWMode, STATUSMode
 from ISAT.utils.dicom import load_dcm_as_image
-from ISAT.widgets.polygon import Line, Polygon, PolygonVertex, PromptPoint, PromptRect
+from ISAT.widgets.polygon import Line, OBB, Polygon, PolygonVertex, PromptPoint, PromptRect
 
 
 class AnnotationScene(QtWidgets.QGraphicsScene):
@@ -397,6 +397,11 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         self.draw_mode = DRAWMode.POLYGON
         self.start_draw()
 
+    def start_draw_obb(self):
+        """Start drawing oriented bounding box (OBB)."""
+        self.draw_mode = DRAWMode.OBB
+        self.start_draw()
+
     def start_draw(self):
         """Try change to create mode and add a empty polygon for annotation ops."""
         # 只有view模式时，才能切换create模式
@@ -412,7 +417,10 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
         # 绘图模式
         if self.mode == STATUSMode.CREATE:
-            self.current_graph = Polygon()
+            if self.draw_mode == DRAWMode.OBB:
+                self.current_graph = OBB()
+            else:
+                self.current_graph = Polygon()
             self.current_graph.hover_alpha = int(
                 self.mainwindow.cfg["software"]["polygon_alpha_hover"] * 255
             )
@@ -551,6 +559,56 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             self.mainwindow.polygons.append(self.current_graph)
             self.mainwindow.annos_dock_widget.listwidget_add_polygon(self.current_graph)
 
+        elif self.draw_mode == DRAWMode.OBB:
+            if self.current_graph is None:
+                return
+
+            graph = self.current_graph
+
+            if graph.is_drawing:
+                # User pressed Finish before the 3rd click.
+                # If we have 2 anchors + trailing point → complete now.
+                if len(graph.points) == 3:
+                    graph._complete_rectangle()
+                    graph.redraw()
+                    graph.is_drawing = False
+                    graph.area = graph.calculate_area()
+                else:
+                    # Too few points — discard
+                    graph.delete()
+                    self.removeItem(graph)
+                    self.change_mode_to_view()
+                    if self.mainwindow.cfg["software"]["create_mode_invisible_polygon"]:
+                        self.mainwindow.set_labels_visible(True)
+                    return
+
+            if len(graph.points) < 4:
+                graph.delete()
+                self.removeItem(graph)
+                self.change_mode_to_view()
+                if self.mainwindow.cfg["software"]["create_mode_invisible_polygon"]:
+                    self.mainwindow.set_labels_visible(True)
+                return
+
+            graph.set_drawed(
+                category,
+                group,
+                is_crowd,
+                note,
+                QtGui.QColor(
+                    self.mainwindow.category_color_dict.get(category, "#6F737A")
+                ),
+                len(self.mainwindow.polygons) + 1,
+            )
+            if self.mainwindow.group_select_mode == "auto":
+                self.mainwindow.current_group += 1
+                self.mainwindow.categories_dock_widget.lineEdit_currentGroup.setText(
+                    str(self.mainwindow.current_group)
+                )
+
+            self.mainwindow.polygons.append(graph)
+            self.mainwindow.annos_dock_widget.listwidget_add_polygon(graph)
+
         # 选择类别
         # self.mainwindow.category_choice_widget.load_cfg()
         # self.mainwindow.category_choice_widget.show()
@@ -623,11 +681,21 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
         self.update_mask()
 
+    def rotate_selected_obb(self, delta_angle: float):
+        """Rotate all selected OBB shapes by *delta_angle* radians."""
+        rotated = False
+        for item in self.selectedItems():
+            if isinstance(item, OBB):
+                item.rotate(delta_angle)
+                rotated = True
+        if rotated:
+            self.mainwindow.set_saved_state(False)
+
     def delete_selected_graph(self):
         """Delete selected graph. Graph can be polygons or vertices, support multiple selection modes by pressing the CTRL key."""
         deleted_layer = None
         for item in self.selectedItems():
-            if isinstance(item, Polygon) and (item in self.mainwindow.polygons):
+            if isinstance(item, (Polygon, OBB)) and (item in self.mainwindow.polygons):
                 if item in self.selected_polygons_list:
                     self.selected_polygons_list.remove(item)
                 self.mainwindow.polygons.remove(item)
@@ -665,7 +733,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
     def edit_polygon(self):
         """Edit the selected polygon. Open edit window then edit the attributes of the polygon."""
         selectd_items = self.selectedItems()
-        selectd_items = [item for item in selectd_items if isinstance(item, Polygon)]
+        selectd_items = [item for item in selectd_items if isinstance(item, (Polygon, OBB))]
         if len(selectd_items) < 1:
             return
 
@@ -676,7 +744,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
     def move_polygon_to_top(self):
         """Move the selected polygon to top layer."""
         selectd_items = self.selectedItems()
-        selectd_items = [item for item in selectd_items if isinstance(item, Polygon)]
+        selectd_items = [item for item in selectd_items if isinstance(item, (Polygon, OBB))]
         if len(selectd_items) < 1:
             return
         current_polygon = selectd_items[0]
@@ -695,7 +763,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
     def move_polygon_to_bottom(self):
         """Move the selected polygon to bottom layer."""
         selectd_items = self.selectedItems()
-        selectd_items = [item for item in selectd_items if isinstance(item, Polygon)]
+        selectd_items = [item for item in selectd_items if isinstance(item, (Polygon, OBB))]
 
         if len(selectd_items) < 1:
             return
@@ -716,10 +784,13 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
     def copy_item(self):
         """Copy selected polygon. The copied polygon has the sam attributes with ori polygon."""
         for item in self.selectedItems():
-            if isinstance(item, Polygon):
+            if isinstance(item, (Polygon, OBB)):
                 index = self.mainwindow.polygons.index(item)
                 if self.current_graph is None:
-                    self.current_graph = Polygon()
+                    if isinstance(item, OBB):
+                        self.current_graph = OBB()
+                    else:
+                        self.current_graph = Polygon()
                     self.addItem(self.current_graph)
 
                 self.current_graph.hover_alpha = int(
@@ -729,9 +800,15 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     self.mainwindow.cfg["software"]["polygon_alpha_no_hover"] * 255
                 )
 
+                if isinstance(item, OBB):
+                    self.current_graph._loading = True
                 for point in item.vertices:
                     x, y = point.x(), point.y()
                     self.current_graph.addPoint(QtCore.QPointF(x, y))
+                if isinstance(item, OBB):
+                    self.current_graph._loading = False
+                    self.current_graph.is_drawing = False
+                    self.current_graph.redraw()
 
                 self.current_graph.set_drawed(
                     item.category,
@@ -893,6 +970,21 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     self.current_graph.addPoint(pos)
                     # 添加随鼠标移动的点
                     self.current_graph.addPoint(pos)
+                elif self.draw_mode == DRAWMode.OBB:
+                    n = len(self.current_graph.points)
+                    if n >= 3:
+                        # 3rd click: remove trailing point, commit 3rd corner
+                        # → auto-complete fires inside OBB.addPoint (len==3)
+                        self.current_graph.removePoint(n - 1)
+                        self.current_graph.addPoint(pos)
+                        # No trailing point appended — rectangle is complete
+                    else:
+                        # 1st / 2nd click
+                        point = self.current_graph.removePoint(n - 1) if n > 0 else None
+                        if point is not None:
+                            pos = point
+                        self.current_graph.addPoint(pos)
+                        self.current_graph._add_trailing(pos)  # trailing point (no auto-complete)
                 else:
                     raise ValueError(
                         "The draw mode named {} not supported.".format(
@@ -911,6 +1003,8 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     self.addItem(prompt_point_item)
 
                 elif self.draw_mode == DRAWMode.POLYGON:
+                    pass
+                elif self.draw_mode == DRAWMode.OBB:
                     pass
                 elif self.draw_mode == DRAWMode.SEGMENTANYTHING_BOX:
                     try:
@@ -1024,6 +1118,27 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
         super(AnnotationScene, self).mousePressEvent(event)
 
+    def _constrain_to_perpendicular(
+        self,
+        origin: QtCore.QPointF,
+        edge_end: QtCore.QPointF,
+        current: QtCore.QPointF,
+    ) -> QtCore.QPointF:
+        """Project *current* onto the line perpendicular to *edge_end*→*origin* through *origin*.
+
+        Used during OBB drawing so the trailing point always lies on the
+        perpendicular through P1, giving accurate real-time visual feedback.
+        """
+        edge = edge_end - origin
+        d_perp = QtCore.QPointF(-edge.y(), edge.x())
+        # Dot(edge, d_perp) = 0  →  edge is zero only when origin == edge_end
+        denom = d_perp.x() * d_perp.x() + d_perp.y() * d_perp.y()
+        if denom < 1e-12:
+            return current
+        v = current - origin
+        t = (v.x() * d_perp.x() + v.y() * d_perp.y()) / denom
+        return QtCore.QPointF(origin.x() + t * d_perp.x(), origin.y() + t * d_perp.y())
+
     def _constrain_to_angle(self, last_point: QtCore.QPointF, current_point: QtCore.QPointF) -> QtCore.QPointF:
         """
         将当前点约束到与上一个点成0°、45°、90°、135°等角度的位置
@@ -1107,6 +1222,24 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     # 计算约束后的位置
                     pos = self._constrain_to_angle(last_point, pos)
                 self.current_graph.movePoint(len(self.current_graph.points) - 1, pos)
+
+            elif self.draw_mode == DRAWMode.OBB:
+                # Before auto-complete, update trailing point; after, no-op
+                if self.current_graph.is_drawing and len(self.current_graph.points) >= 2:
+                    if len(self.current_graph.points) == 3:
+                        # After 2nd click: constrain trailing point to the
+                        # perpendicular through P1 so the live preview matches
+                        # the auto-completed rectangle.
+                        pos = self._constrain_to_perpendicular(
+                            self.current_graph.points[1],
+                            self.current_graph.points[0],
+                            pos,
+                        )
+                    elif self.shift_pressed:
+                        # 1st click → constrain first-edge direction to 45° steps
+                        last_point = self.current_graph.points[-2]
+                        pos = self._constrain_to_angle(last_point, pos)
+                    self.current_graph.movePoint(len(self.current_graph.points) - 1, pos)
 
             elif self.draw_mode == DRAWMode.SEGMENTANYTHING_BOX:
                 if self.prompt_box_item is not None:
@@ -1267,6 +1400,20 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                 # 移除随鼠标移动的点
                 self.current_graph.removePoint(len(self.current_graph.points) - 2)
 
+            elif self.draw_mode == DRAWMode.OBB:
+                graph = self.current_graph
+                if len(graph.points) >= 4:
+                    # Undo auto-complete: remove auto-computed corners, restore trailing point
+                    graph.is_drawing = True
+                    graph.removePoint(3)
+                    graph.removePoint(2)
+                    # Restore trailing point (no auto-complete)
+                    if len(graph.points) >= 1:
+                        last = QtCore.QPointF(graph.points[-1])
+                        graph._add_trailing(last)
+                elif len(graph.points) >= 2:
+                    graph.removePoint(len(graph.points) - 2)
+
         if self.mode == STATUSMode.REPAINT:
             if len(self.repaint_line_item.points) < 2:
                 return
@@ -1299,6 +1446,21 @@ class AnnotationView(QtWidgets.QGraphicsView):
             self.shift_pressed = True
             if self.scene():  # 同步到scene
                 self.scene().shift_pressed = True
+
+        # --- Temporary OBB shortcuts ---
+        scene = self.scene()
+        if scene is not None:
+            if event.key() == QtCore.Qt.Key.Key_O:
+                # Start OBB drawing (VIEW mode only)
+                if scene.mode == STATUSMode.VIEW:
+                    scene.start_draw_obb()
+            elif event.key() == QtCore.Qt.Key.Key_N:
+                # Rotate selected OBB counter-clockwise
+                scene.rotate_selected_obb(math.radians(15))
+            elif event.key() == QtCore.Qt.Key.Key_M:
+                # Rotate selected OBB clockwise
+                scene.rotate_selected_obb(math.radians(-15))
+
         super(AnnotationView, self).keyPressEvent(event)
 
     def keyReleaseEvent(self, event):

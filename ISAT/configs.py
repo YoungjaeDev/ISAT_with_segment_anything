@@ -80,6 +80,8 @@ class DRAWMode(Enum):
     """Segment anything with box prompt."""
     SEGMENTANYTHING_VISUAL = 3
     """Segment anything with visual prompt."""
+    OBB = 4
+    """Draw oriented bounding box (3-click, auto-completed rectangle)."""
 
 
 class MAPMode(Enum):

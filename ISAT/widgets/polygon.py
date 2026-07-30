@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Author  : LG
 
+import math
 import typing
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -155,6 +156,18 @@ class PromptRectVertex(BaseVertex):
 
     def __init__(self, parent_shape, color, nohover_size=2):
         super().__init__(parent_shape, color, nohover_size, selectable=False)
+
+
+class OBBVertex(PolygonVertex):
+    """Vertex for OBB annotation — selectable with hover effects.
+
+    Currently identical to PolygonVertex; exists as a dedicated type so that
+    OBB-specific vertex behaviour (e.g. rotation handle) can be added later
+    without affecting Polygon vertices.
+    """
+
+    def __init__(self, parent_shape, color, nohover_size=2):
+        super().__init__(parent_shape, color, nohover_size)
 
 
 # ============================================================
@@ -509,6 +522,490 @@ class Polygon(QtWidgets.QGraphicsPolygonItem, BaseShape):
         )
         return object
 
+# ============================================================
+#  OBB — Oriented Bounding Box annotation shape
+# ============================================================
+
+class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
+    """Oriented Bounding Box annotation.
+
+    An OBB is a rectangle defined by 4 corner points.  Unlike a free-form
+    Polygon, the 4 points are **constrained** to form a rectangle — dragging
+    one corner keeps the opposite corner fixed and preserves the current
+    orientation (rotation angle).
+
+    Creation flow (3 clicks)::
+
+        P0, P1  → define the first edge (direction + length).
+        P_click → defines the perpendicular width; the click is projected
+                   onto the perpendicular so that P0-P1-P3-P2 is a true
+                   rectangle.
+
+    Internal representation
+    -----------------------
+    ``self.points`` holds the 4 corner points in **local** coordinates in
+    clockwise order ``[P0, P1, P3, P2]`` where::
+
+        P0 → P1   first edge
+        P1 → P3   perpendicular edge (width direction)
+        P3 → P2   opposite edge   (parallel to P0→P1)
+        P2 → P0   closing edge    (parallel to P1→P3)
+
+    The angle / centre / size properties are **derived** from ``self.points``
+    rather than stored — this keeps the geometry consistent with the points.
+    """
+
+    def __init__(self):
+        QtWidgets.QGraphicsPolygonItem.__init__(self, parent=None)
+        self._init_shape(OBBVertex)
+
+        self.line_width = 1
+        self.hover_alpha = 150
+        self.nohover_alpha = 80
+        self.category = ""
+        self.group = 0
+        self.iscrowd = False
+        self.note = ""
+        self.area = 0
+
+        self.color = QtGui.QColor("#ff0000")
+        self.is_drawing = True
+        pen = QtGui.QPen(self.color, self.line_width)
+        pen.setStyle(QtCore.Qt.PenStyle.DotLine)
+        self.setPen(pen)
+        self.setBrush(QtGui.QBrush(self.color, QtCore.Qt.BrushStyle.FDiagPattern))
+
+        self.setAcceptHoverEvents(True)
+        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
+        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+        self.setFlag(
+            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True
+        )
+        self.setZValue(1e5)
+
+    # ------------------------------------------------------------------
+    #  Derived geometric properties
+    # ------------------------------------------------------------------
+
+    @property
+    def angle(self) -> float:
+        """Rotation angle of the first edge in radians (range [-π, π])."""
+        if len(self.points) < 2:
+            return 0.0
+        d = self.points[1] - self.points[0]
+        return math.atan2(d.y(), d.x())
+
+    @property
+    def center(self) -> QtCore.QPointF:
+        """Centre point of the rectangle (local coordinates)."""
+        if len(self.points) < 4:
+            return QtCore.QPointF(0, 0)
+        return (self.points[0] + self.points[2]) / 2
+
+    @property
+    def size(self):
+        """Return ``(width, height)`` tuple.
+
+        *width* — length of the first edge ``|P0→P1|``.
+        *height* — length of the perpendicular edge ``|P0→P2|``.
+        """
+        if len(self.points) < 4:
+            return (0, 0)
+        w = math.hypot(
+            self.points[1].x() - self.points[0].x(),
+            self.points[1].y() - self.points[0].y(),
+        )
+        h = math.hypot(
+            self.points[3].x() - self.points[0].x(),
+            self.points[3].y() - self.points[0].y(),
+        )
+        return (w, h)
+
+    # ------------------------------------------------------------------
+    #  Point / vertex CRUD (override BaseShape)
+    # ------------------------------------------------------------------
+
+    def addPoint(self, point: QtCore.QPointF):
+        """Append a corner point.
+
+        Interactive drawing (3 clicks)::
+
+            click 1 → [P0, T]          (anchor + trailing)
+            click 2 → [P0, P1, T]      (2 anchors + trailing)
+            click 3 → [P0, P1, P2]     → auto-complete to 4 corners
+
+        During loading from disk the guard allows up to 4 points so that
+        existing 4-point annotations are restored without modification.
+
+        .. note::
+            Trailing points (the live mouse-following point) should be
+            added via :meth:`_add_trailing` instead so that they do **not**
+            trigger auto-complete.
+        """
+        _loading = getattr(self, "_loading", False)
+        max_points = 4 if _loading else 3
+        if len(self.points) >= max_points:
+            return
+
+        super().addPoint(point)
+
+        if _loading:
+            return
+
+        if len(self.points) == 3:
+            self._complete_rectangle()
+            self.redraw()
+            self.is_drawing = False
+            self.area = self.calculate_area()
+
+    def _add_trailing(self, point: QtCore.QPointF):
+        """Add a mouse-following trailing point **without** triggering auto-complete.
+
+        This bypasses :meth:`addPoint` and calls :meth:`BaseShape.addPoint`
+        directly so that the trailing point is a plain vertex that can be
+        freely moved / removed without side-effects.
+        """
+        # pylint: disable=protected-access
+        if len(self.points) >= 3:
+            return
+        super(OBB, self).addPoint(point)
+
+    def _complete_rectangle(self):
+        """Compute the true rectangle from 3 real corners.
+
+        Called when ``self.points == [P0, P1, P_click]`` where:
+        * P0, P1  — first edge (clicks 1 & 2)
+        * P_click — 3rd corner (click 3), projected onto perpendicular through P1
+
+        After this call ``self.points`` is ``[P0, P1, P3, P2]`` (clockwise).
+        """
+        p0 = self.points[0]
+        p1 = self.points[1]
+        p_click = self.points[2]  # 3rd corner, needs projection
+
+        edge = p1 - p0
+        # perpendicular: rotate edge by +90°
+        d_perp = QtCore.QPointF(-edge.y(), edge.x())
+
+        # Project p_click onto the perpendicular line from P1
+        v = p_click - p1
+        denom = d_perp.x() * d_perp.x() + d_perp.y() * d_perp.y()
+        t = (v.x() * d_perp.x() + v.y() * d_perp.y()) / denom
+
+        p3 = QtCore.QPointF(p1.x() + t * d_perp.x(), p1.y() + t * d_perp.y())
+        p2 = p3 - edge  # == P0 + t * d_perp
+
+        # Replace the clicked corner with its projected position (P3)
+        self.points[2] = p3
+        self.vertices[2].setPos(p3)
+
+        # Append the 4th corner (P2)
+        self.points.append(p2)
+        vertex_size = self.scene().mainwindow.cfg["software"]["vertex_size"] * 2
+        vertex = self._vertex_cls(self, self.color, vertex_size)
+        self.scene().addItem(vertex)
+        self.vertices.append(vertex)
+        vertex.setPos(p2)
+
+    def movePoint(self, index: int, point: QtCore.QPointF):
+        """Move a corner while maintaining the rectangular constraint.
+
+        The **opposite** corner ``(index+2)%4`` stays fixed.  The other two
+        corners are recalculated so that the rectangle keeps its current
+        orientation (``self.angle``).
+        """
+        if not 0 <= index < len(self.points):
+            return
+        if len(self.points) < 4:
+            super().movePoint(index, point)
+            return
+
+        new_corner = self.mapFromScene(point)
+        opposite_idx = (index + 2) % 4
+        fixed_corner = self.points[opposite_idx]
+
+        self._recompute_from_diagonal(index, new_corner, opposite_idx, fixed_corner)
+        self.redraw()
+        self._on_point_moved(index, point)
+
+    def _recompute_from_diagonal(self, dragged_idx, new_pos, fixed_idx, fixed_pos):
+        """Recompute all 4 corners from a new diagonal, preserving angle."""
+        ang = self.angle
+        d1 = QtCore.QPointF(math.cos(ang), math.sin(ang))   # edge direction
+        d2 = QtCore.QPointF(-math.sin(ang), math.cos(ang))   # perpendicular
+
+        center = (new_pos + fixed_pos) / 2
+        half_diag = new_pos - center  # = (new_pos - fixed_pos) / 2
+
+        hw = half_diag.x() * d1.x() + half_diag.y() * d1.y()  # dot(d1, half_diag)
+        hh = half_diag.x() * d2.x() + half_diag.y() * d2.y()  # dot(d2, half_diag)
+
+        self.points[dragged_idx] = new_pos
+        self.points[fixed_idx] = fixed_pos
+        self.points[(dragged_idx + 1) % 4] = QtCore.QPointF(
+            center.x() - d1.x() * hw + d2.x() * hh,
+            center.y() - d1.y() * hw + d2.y() * hh,
+        )
+        self.points[(dragged_idx + 3) % 4] = QtCore.QPointF(
+            center.x() + d1.x() * hw - d2.x() * hh,
+            center.y() + d1.y() * hw - d2.y() * hh,
+        )
+
+        # Sync vertex scene positions
+        for i in range(4):
+            if i != dragged_idx:
+                self.moveVertex(i, self.mapToScene(self.points[i]))
+
+    def rotate(self, delta_angle: float):
+        """Rotate the OBB by *delta_angle* radians around its centre."""
+        if len(self.points) < 4:
+            return
+
+        c = self.center
+        cos_a = math.cos(delta_angle)
+        sin_a = math.sin(delta_angle)
+
+        for i in range(4):
+            dx = self.points[i].x() - c.x()
+            dy = self.points[i].y() - c.y()
+            self.points[i] = QtCore.QPointF(
+                c.x() + dx * cos_a - dy * sin_a,
+                c.y() + dx * sin_a + dy * cos_a,
+            )
+            self.moveVertex(i, self.mapToScene(self.points[i]))
+
+        self.redraw()
+
+    def moveVertex(self, index, point):
+        """Direct vertex position update (bypasses ``movePoint``)."""
+        if not 0 <= index < len(self.vertices):
+            return
+        vertex = self.vertices[index]
+        vertex.setEnabled(False)
+        vertex.setPos(point)
+        vertex.setEnabled(True)
+
+    # ------------------------------------------------------------------
+    #  Hook — side-effects after vertex drag
+    # ------------------------------------------------------------------
+
+    def _on_point_moved(self, index: int, point: QtCore.QPointF):
+        if self.scene().mainwindow.cfg["software"]["real_time_area"]:
+            self.area = self.calculate_area()
+        if (
+            self.scene().mainwindow.load_finished
+            and not self.is_drawing
+            and self.scene().mode != STATUSMode.REPAINT
+        ):
+            self.scene().mainwindow.set_saved_state(False)
+
+    # ------------------------------------------------------------------
+    #  Qt item events
+    # ------------------------------------------------------------------
+
+    def itemChange(
+        self, change: "QGraphicsItem.GraphicsItemChange", value: typing.Any
+    ):
+        if (
+            change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged
+            and not self.is_drawing
+            and self.scene().mode != STATUSMode.CREATE
+        ):
+            if self.isSelected():
+                color = QtGui.QColor("#00A0FF")
+                color.setAlpha(self.hover_alpha)
+                self.setBrush(color)
+                self.scene().selected_polygons_list.append(self)
+            else:
+                self.color.setAlpha(self.nohover_alpha)
+                self.setBrush(self.color)
+                if self in self.scene().selected_polygons_list:
+                    self.scene().selected_polygons_list.remove(self)
+            self.scene().mainwindow.annos_dock_widget.set_selected(self)
+
+        if (
+            change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange
+        ):
+            if self.is_drawing:
+                value = QtCore.QPointF(0, 0)
+            else:
+                bias = value
+                l, t, b, r = (
+                    self.boundingRect().left(),
+                    self.boundingRect().top(),
+                    self.boundingRect().bottom(),
+                    self.boundingRect().right(),
+                )
+                if l + bias.x() < 0:
+                    bias.setX(-l)
+                if r + bias.x() > self.scene().width():
+                    bias.setX(self.scene().width() - r)
+                if t + bias.y() < 0:
+                    bias.setY(-t)
+                if b + bias.y() > self.scene().height():
+                    bias.setY(self.scene().height() - b)
+
+                for index, point in enumerate(self.points):
+                    self.moveVertex(index, point + bias)
+
+                if self.scene().mainwindow.load_finished:
+                    self.scene().mainwindow.set_saved_state(False)
+
+        if (
+            change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged
+            and self.isSelected()
+        ):
+            self.setSelected(not self.is_drawing)
+
+        return super().itemChange(change, value)
+
+    def hoverEnterEvent(self, event: "QGraphicsSceneHoverEvent"):
+        if not self.is_drawing and not self.isSelected():
+            self.color.setAlpha(self.hover_alpha)
+            self.setBrush(self.color)
+        super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event: "QGraphicsSceneHoverEvent"):
+        if not self.is_drawing and not self.isSelected():
+            self.color.setAlpha(self.nohover_alpha)
+            self.setBrush(self.color)
+        super().hoverLeaveEvent(event)
+
+    def mouseDoubleClickEvent(self, event: "QGraphicsSceneMouseEvent"):
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+            self.scene().mainwindow.category_edit_widget.polygons = [self]
+            self.scene().mainwindow.category_edit_widget.load_cfg()
+            self.scene().mainwindow.category_edit_widget.show()
+
+    # ------------------------------------------------------------------
+    #  Rendering
+    # ------------------------------------------------------------------
+
+    def redraw(self):
+        if len(self.points) < 1:
+            return
+        self.setPolygon(QtGui.QPolygonF(self.points))
+
+    def change_color(self, color: QtGui.QColor):
+        self.color = color
+        if not self.scene().mainwindow.cfg["software"]["show_edge"]:
+            color.setAlpha(0)
+        self.setPen(QtGui.QPen(color, self.line_width))
+        self.color.setAlpha(self.nohover_alpha)
+        self.setBrush(self.color)
+
+        vertex_color = QtGui.QColor(self.color)
+        vertex_color.setAlpha(255)
+        for vertex in self.vertices:
+            vertex.setPen(QtGui.QPen(vertex_color, self.line_width))
+            vertex.setBrush(vertex_color)
+
+    # ------------------------------------------------------------------
+    #  Lifecycle
+    # ------------------------------------------------------------------
+
+    def set_drawed(
+        self,
+        category: str,
+        group: int,
+        iscrowd: bool,
+        note: str,
+        color: QtGui.QColor,
+        layer: int = None,
+    ):
+        self.is_drawing = False
+        self.category = category
+        if isinstance(group, str):
+            group = 0 if group == "" else int(group)
+        self.group = group
+        self.iscrowd = iscrowd
+        self.note = note
+
+        self.color = QtGui.QColor(color)
+        self.color.setAlpha(255)
+
+        if not self.scene().mainwindow.cfg["software"]["show_edge"]:
+            self.color.setAlpha(0)
+        self.setPen(QtGui.QPen(self.color, self.line_width))
+        self.color.setAlpha(self.nohover_alpha)
+        self.setBrush(self.color)
+        if layer is not None:
+            self.setZValue(layer)
+            for vertex in self.vertices:
+                vertex.setZValue(layer)
+        for vertex in self.vertices:
+            vertex.setColor(color)
+
+        self.setFlag(
+            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable,
+            not self.scene().mainwindow.annos_dock_widget.checkBox_lock.isChecked(),
+        )
+
+    def calculate_area(self) -> float:
+        """Return width × height."""
+        w, h = self.size
+        return w * h
+
+    # ------------------------------------------------------------------
+    #  Serialisation
+    # ------------------------------------------------------------------
+
+    def load_object(self, obj):
+        """Load attributes from an Annotation Object."""
+        self._loading = True
+        for x, y in obj.segmentation:
+            self.addPoint(QtCore.QPointF(x, y))
+        self._loading = False
+
+        if len(self.points) == 3:
+            self._complete_rectangle()
+
+        color = self.scene().mainwindow.category_color_dict.get(
+            obj.category, "#6F737A"
+        )
+        self.set_drawed(
+            obj.category,
+            obj.group,
+            obj.iscrowd,
+            obj.note,
+            QtGui.QColor(color),
+            obj.layer,
+        )
+        self.area = obj.area
+
+    def to_object(self) -> Object:
+        """Convert to an Annotation Object for serialisation."""
+        if self.is_drawing:
+            return None
+
+        segmentation = []
+        for point in self.points:
+            pt = point + self.pos()
+            segmentation.append((round(pt.x(), 2), round(pt.y(), 2)))
+
+        xmin = self.boundingRect().x() + self.pos().x()
+        ymin = self.boundingRect().y() + self.pos().y()
+        xmax = xmin + self.boundingRect().width()
+        ymax = ymin + self.boundingRect().height()
+
+        if (
+            not self.scene().mainwindow.cfg["software"]["real_time_area"]
+            or self.area == 0
+        ):
+            self.area = self.calculate_area()
+
+        obj = Object(
+            self.category,
+            group=self.group,
+            segmentation=segmentation,
+            area=self.area,
+            layer=self.zValue(),
+            bbox=(xmin, ymin, xmax, ymax),
+            iscrowd=self.iscrowd,
+            note=self.note,
+            is_obb=True,
+        )
+        return obj
 
 # ============================================================
 #  Line — repaint-mode guide line

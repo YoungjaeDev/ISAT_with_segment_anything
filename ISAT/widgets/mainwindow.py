@@ -39,7 +39,7 @@ from ISAT.widgets.text_prompt_dock_widget import TextPromptDockWidget
 from ISAT.widgets.visuall_prompt_dock_widget import VisualPromptDockWidget
 from ISAT.widgets.model_manager_dialog import ModelManagerDialog
 from ISAT.widgets.plugin_manager_dialog import PluginManagerDialog
-from ISAT.widgets.polygon import Polygon, PromptPoint
+from ISAT.widgets.polygon import OBB, Polygon, PromptPoint
 from ISAT.widgets.process_exif_dialog import ProcessExifDialog
 from ISAT.widgets.remote_sam_dialog import RemoteSamDialog
 from ISAT.widgets.right_button_menu import RightButtonMenu
@@ -1046,7 +1046,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         return contours, hierarchy
 
-    def _setup_polygon_alpha(self, polygon: Polygon):
+    def _setup_polygon_alpha(self, polygon):
         """Set hover and nohover alpha for a polygon from config."""
         polygon.hover_alpha = int(
             self.cfg["software"]["polygon_alpha_hover"] * 255
@@ -1680,7 +1680,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                             self.current_group = 1
                     except Exception as e:
                         pass
-                    polygon = Polygon()
+                    if getattr(object, 'is_obb', False):
+                        polygon = OBB()
+                    else:
+                        polygon = Polygon()
                     self._setup_polygon_alpha(polygon)
                     self.scene.addItem(polygon)
                     polygon.load_object(object)
