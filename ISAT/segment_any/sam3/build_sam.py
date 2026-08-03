@@ -12,7 +12,8 @@ from torchvision.transforms import v2
 from PIL import Image
 
 
-bpe_path = os.path.join(__file__, "..", "bpe_simple_vocab_16e6.txt.gz")
+# __file__ 을 그대로 join 하면 build_sam.py/../ 가 되어 POSIX 에서 NotADirectoryError 가 난다
+bpe_path = os.path.join(os.path.dirname(__file__), "bpe_simple_vocab_16e6.txt.gz")
 
 def build_sam3(checkpoint):
     model = build_sam3_image_model(
