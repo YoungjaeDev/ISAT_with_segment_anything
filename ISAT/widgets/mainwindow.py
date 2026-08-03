@@ -664,6 +664,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.init_segany_thread = InitSegAnyThread(self)
         self.init_segany_thread.tag.connect(self.init_sam_finish)
 
+        # GPU 모니터 스레드는 모델을 바꿀 때마다 다시 만들므로 참조를 들고 있어야 한다
+        self.gpu_resource_thread = None
+
         # 检查最新版本
         self.check_latest_version_thread = CheckLatestVersionThread(self)
         self.check_latest_version_thread.tag.connect(self.latest_version_tip)
@@ -803,9 +806,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.use_segment_anything = True
             if self.use_segment_anything:
                 if self.segany.device != "cpu":
-                    gpu_resource_thread = GPUResource_Thread()
-                    gpu_resource_thread.message.connect(self.labelGPUResource.setText)
-                    gpu_resource_thread.start()
+                    # 이전 스레드를 정리하지 않으면 모델을 바꿀 때마다 계속 쌓인다
+                    self.stop_gpu_resource_thread()
+                    self.gpu_resource_thread = GPUResource_Thread()
+                    self.gpu_resource_thread.message.connect(
+                        self.labelGPUResource.setText
+                    )
+                    self.gpu_resource_thread.start()
                 else:
                     self.labelGPUResource.setText("cpu")
             else:
@@ -2270,11 +2277,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         except Exception:
             pass
 
+    def stop_gpu_resource_thread(self):
+        """Stop and join the GPU monitor thread if one is running."""
+        if self.gpu_resource_thread is not None:
+            self.gpu_resource_thread.stop()
+            self.gpu_resource_thread.wait()
+            self.gpu_resource_thread = None
+
     def exit(self):
         # 保存类别配置
         self.save_cfg(self.config_file)
         # 保存软件配置
         self.save_software_cfg()
+
+        self.stop_gpu_resource_thread()
 
         self.plugin_manager_dialog.trigger_application_shutdown()
 
