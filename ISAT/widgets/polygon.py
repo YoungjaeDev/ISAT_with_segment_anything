@@ -101,7 +101,10 @@ class BaseVertex(QtWidgets.QGraphicsPathItem):
         ):
             value = self._clamp_to_scene(value)
             index = self.parent_shape.vertices.index(self)
-            self.parent_shape.movePoint(index, value)
+            if self.parent_shape.movePoint(index, value) is False:
+                # 도형이 거부한 이동은 꼭짓점도 따라가면 안 된다.
+                # 그냥 두면 핸들만 옮겨져 도형과 어긋난다
+                return super().itemChange(change, self.pos())
 
         return super().itemChange(change, value)
 
@@ -654,8 +657,11 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
 
         if len(self.points) == 3:
             if not self._complete_rectangle():
-                # 사각형을 만들 수 없으면 방금 찍은 점을 되돌려 계속 그리게 한다
+                # 사각형을 만들 수 없으면 방금 찍은 점을 되돌려 계속 그리게 한다.
+                # trailing 점을 다시 두지 않으면 다음 마우스 이동이 두 번째
+                # 앵커를 trailing 으로 착각해 첫 변을 조용히 바꾼다
                 self.removePoint(2)
+                self._add_trailing(point)
                 return
             self.redraw()
             self.is_drawing = False
@@ -740,6 +746,9 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         The **opposite** corner ``(index+2)%4`` stays fixed.  The other two
         corners are recalculated so that the rectangle keeps its current
         orientation (``self.angle``).
+
+        Returns ``False`` when the move is rejected for leaving the image, so
+        that ``BaseVertex.itemChange()`` can keep the handle where it was.
         """
         if not 0 <= index < len(self.points):
             return
@@ -751,12 +760,19 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         opposite_idx = (index + 2) % 4
         fixed_corner = self.points[opposite_idx]
 
-        self._recompute_from_diagonal(index, new_corner, opposite_idx, fixed_corner)
+        if not self._recompute_from_diagonal(
+            index, new_corner, opposite_idx, fixed_corner
+        ):
+            return False
         self.redraw()
         self._on_point_moved(index, point)
 
-    def _recompute_from_diagonal(self, dragged_idx, new_pos, fixed_idx, fixed_pos):
-        """Recompute all 4 corners from a new diagonal, preserving angle."""
+    def _recompute_from_diagonal(self, dragged_idx, new_pos, fixed_idx, fixed_pos) -> bool:
+        """Recompute all 4 corners from a new diagonal, preserving angle.
+
+        Returns ``False`` without touching the points when a derived corner
+        would end up outside the image.
+        """
         ang = self.angle
         d1 = QtCore.QPointF(math.cos(ang), math.sin(ang))   # edge direction
         d2 = QtCore.QPointF(-math.sin(ang), math.cos(ang))   # perpendicular
@@ -778,7 +794,7 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
 
         # 드래그한 코너만 클램프되므로 파생된 두 코너는 따로 확인해야 한다
         if not self._within_scene((adjacent_1, adjacent_2)):
-            return
+            return False
 
         self.points[dragged_idx] = new_pos
         self.points[fixed_idx] = fixed_pos
@@ -789,6 +805,7 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         for i in range(4):
             if i != dragged_idx:
                 self.moveVertex(i, self.mapToScene(self.points[i]))
+        return True
 
     def rotate(self, delta_angle: float):
         """Rotate the OBB by *delta_angle* radians around its centre."""

@@ -32,6 +32,19 @@ class StubMainWindow:
         pass
 
 
+def assert_handle_on_corner(obb, index, label):
+    """Fail when the draggable handle drifted away from the corner it owns."""
+    handle = obb.vertices[index].pos()
+    corner = obb.mapToScene(obb.points[index])
+    assert (round(handle.x(), 3), round(handle.y(), 3)) == (
+        round(corner.x(), 3),
+        round(corner.y(), 3),
+    ), (
+        f"{label}: 핸들이 코너에서 떨어졌다 "
+        f"handle=({handle.x()}, {handle.y()}) corner=({corner.x()}, {corner.y()})"
+    )
+
+
 def main():
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
     scene = AnnotationScene(StubMainWindow())
@@ -43,8 +56,9 @@ def main():
     for x, y in [(30, 30), (30, 30), (70, 70)]:
         degenerate.addPoint(QtCore.QPointF(x, y))
 
-    assert len(degenerate.points) == 2, (
-        f"세 번째 점이 되돌려지지 않았다: {len(degenerate.points)}"
+    # 앵커 2 개 + 마우스를 따라다니는 trailing 1 개가 남아야 한다
+    assert len(degenerate.points) == 3, (
+        f"거부 후 상태가 앵커 2 + trailing 1 이 아니다: {len(degenerate.points)}"
     )
     assert degenerate.is_drawing is True, "완성되지 않았는데 drawing 상태가 풀렸다"
 
@@ -64,11 +78,14 @@ def main():
     for x, y in [(0, 50), (99, 0), (0, 0)]:
         projected_out.addPoint(QtCore.QPointF(x, y))
 
-    assert len(projected_out.points) == 2, (
+    assert len(projected_out.points) == 3, (
         f"이미지를 벗어나는 완성이 적용됐다: "
         f"{[(p.x(), p.y()) for p in projected_out.points]}"
     )
     assert projected_out.is_drawing is True, "완성되지 않았는데 drawing 상태가 풀렸다"
+    # 두 앵커가 그대로여야 다음 클릭에서 첫 변이 바뀌지 않는다
+    anchors = [(p.x(), p.y()) for p in projected_out.points[:2]]
+    assert anchors == [(0.0, 50.0), (99.0, 0.0)], f"앵커가 바뀌었다: {anchors}"
 
     # 이미지를 꽉 채운 OBB 는 회전하면 코너가 밖으로 나가므로 회전을 거부해야 한다
     edge = OBB()
@@ -91,6 +108,26 @@ def main():
     inner.rotate(0.3)
     inner_after = [(p.x(), p.y()) for p in inner.points]
     assert inner_before != inner_after, "여유가 있는 OBB 인데 회전하지 않았다"
+
+    # 회전된 OBB 의 코너를 끌 때, 파생 코너가 밖으로 나가는 드래그는 거부되고
+    # 그래픽 핸들도 도형에서 떨어지지 않아야 한다
+    drag = OBB()
+    scene.addItem(drag)
+    for x, y in [(50, 10), (70, 30), (60, 40)]:
+        drag.addPoint(QtCore.QPointF(x, y))
+    assert len(drag.points) == 4, "회전된 OBB 가 완성되지 않았다"
+
+    before_drag = [(p.x(), p.y()) for p in drag.points]
+    drag.vertices[0].setPos(QtCore.QPointF(0, 99))
+    after_drag = [(p.x(), p.y()) for p in drag.points]
+    assert before_drag == after_drag, f"이미지를 벗어나는 드래그가 적용됐다: {after_drag}"
+    assert_handle_on_corner(drag, 0, "거부된 드래그")
+
+    # 여유 있는 위치로 끄는 것은 정상 반영되어야 한다
+    drag.vertices[0].setPos(QtCore.QPointF(45, 55))
+    moved = [(p.x(), p.y()) for p in drag.points]
+    assert moved != before_drag, "여유 있는 드래그인데 반영되지 않았다"
+    assert_handle_on_corner(drag, 0, "수락된 드래그")
 
     print("OBB degenerate guard OK")
     del app
