@@ -529,9 +529,14 @@ class InitSegAnyThread(QThread):
                     pass
 
             # 确保所有 CUDA 操作完成后再释放缓存，释放 GIL 给主线程
+            # 앞선 비동기 CUDA 오류가 여기서 터질 수 있는데, 그대로 두면 완료 신호가
+            # 나가지 않아 init_segment_anything 이 꺼둔 메인 윈도우가 잠긴 채로 남는다
             if torch.cuda.is_available():
-                torch.cuda.synchronize()
-                torch.cuda.empty_cache()
+                try:
+                    torch.cuda.synchronize()
+                    torch.cuda.empty_cache()
+                except Exception as e:
+                    print("CUDA cleanup error: ", e)
 
             try:
                 self.mainwindow.segany = SegAny(

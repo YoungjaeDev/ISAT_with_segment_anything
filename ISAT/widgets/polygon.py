@@ -741,7 +741,11 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         vertex = self._vertex_cls(self, self.color, vertex_size)
         self.scene().addItem(vertex)
         self.vertices.append(vertex)
+        # points 가 이미 4개라 그냥 setPos 하면 itemChange 가 movePoint 를 불러
+        # 네 코너를 다시 계산하고 순서까지 바꾼다. moveVertex 와 같은 방식으로 막는다
+        vertex.setEnabled(False)
         vertex.setPos(p2)
+        vertex.setEnabled(True)
         return True
 
     def movePoint(self, index: int, point: QtCore.QPointF):
@@ -786,6 +790,11 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
 
         hw = half_diag.x() * d1.x() + half_diag.y() * d1.y()  # dot(d1, half_diag)
         hh = half_diag.x() * d2.x() + half_diag.y() * d2.y()  # dot(d2, half_diag)
+
+        # 한쪽 축 투영이 0 이면 인접 코너가 붕괴해 면적 0 인 사각형이 된다.
+        # hw, hh 는 절반 크기라 전체 폭/높이가 1픽셀 미만이면 거부한다
+        if abs(hw) < 0.5 or abs(hh) < 0.5:
+            return False
 
         adjacent_1 = QtCore.QPointF(
             center.x() - d1.x() * hw + d2.x() * hh,
