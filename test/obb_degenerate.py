@@ -72,6 +72,17 @@ def main():
     assert normal.is_drawing is False, "정상 OBB 인데 drawing 상태가 남았다"
     assert normal.area > 0, f"면적이 계산되지 않았다: {normal.area}"
 
+    # 세 번째 점이 첫 변 위에 있으면 높이가 0 인 사각형이 된다
+    flat = OBB()
+    scene.addItem(flat)
+    for x, y in [(10, 60), (60, 60), (35, 60)]:
+        flat.addPoint(QtCore.QPointF(x, y))
+
+    assert len(flat.points) == 3, (
+        f"높이 0 인 완성이 적용됐다: {[(p.x(), p.y()) for p in flat.points]}"
+    )
+    assert flat.is_drawing is True, "완성되지 않았는데 drawing 상태가 풀렸다"
+
     # 세 클릭이 모두 이미지 안이어도 투영된 코너는 밖으로 나갈 수 있다
     projected_out = OBB()
     scene.addItem(projected_out)

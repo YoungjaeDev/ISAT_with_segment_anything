@@ -340,13 +340,21 @@ class SegAnyVideoThread(QThread):
                 self.mainwindow.actionVideo_segment.setEnabled(False)
                 self.mainwindow.actionVideo_segment_once.setEnabled(False)
                 self.mainwindow.actionVideo_segment_five_times.setEnabled(False)
+                # 완료 신호 없이 빠지면 seg_video_start 가 끈 UI 가 다시 켜지지 않는다
+                self.tag.emit(0, total, True, False, "")
                 return
 
-            if self.mainwindow.segany_video.inference_state == {}:
-                self.mainwindow.segany_video.init_state(
-                    self.mainwindow.image_root, self.mainwindow.files_list
-                )
-            self.mainwindow.segany_video.reset_state()
+            try:
+                if self.mainwindow.segany_video.inference_state == {}:
+                    self.mainwindow.segany_video.init_state(
+                        self.mainwindow.image_root, self.mainwindow.files_list
+                    )
+                self.mainwindow.segany_video.reset_state()
+            except Exception as e:
+                # 프레임을 못 읽거나 메모리가 모자라면 여기서 죽는데,
+                # 아래 try 블록 밖이라 완료 신호가 나가지 않아 앱이 잠긴 채로 남았다
+                self.tag.emit(0, total, True, True, "{}".format(e))
+                return
 
             current_file = self.mainwindow.files_list[self.start_frame_idx]
             current_file_path = os.path.join(self.mainwindow.image_root, current_file)

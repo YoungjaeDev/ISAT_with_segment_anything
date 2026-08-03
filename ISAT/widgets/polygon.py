@@ -719,6 +719,10 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         if denom == 0:
             return False
         t = (v.x() * d_perp.x() + v.y() * d_perp.y()) / denom
+        # 세 번째 점이 첫 변 위에 있으면 높이가 0 인 사각형이 나온다.
+        # t 는 정규화된 값이라 실제 높이는 |t| * |d_perp| 다
+        if abs(t) * math.sqrt(denom) < 1.0:
+            return False
 
         p3 = QtCore.QPointF(p1.x() + t * d_perp.x(), p1.y() + t * d_perp.y())
         p2 = p3 - edge  # == P0 + t * d_perp
