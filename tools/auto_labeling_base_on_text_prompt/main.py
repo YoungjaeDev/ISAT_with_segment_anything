@@ -83,10 +83,11 @@ class Annotation:
             self.height, self.width = image.shape
             self.depth = 0
         else:
-            self.height, self.width, self.depth = image.shape[:, :3]
             print(
                 "Warning: Except image has 2 or 3 ndim, but get {}.".format(image.ndim)
             )
+            # shape 는 튜플이라 2차원 슬라이스를 받지 못한다. 앞 3개 축만 쓴다
+            self.height, self.width, self.depth = image.shape[:3]
         del image
 
         self.objects: List[Object,] = []
