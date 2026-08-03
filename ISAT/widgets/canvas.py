@@ -1428,8 +1428,9 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             if not isinstance(item, Polygon) or item.is_drawing:
                 continue
             # polygon 객체의 실제 표시 색상 사용
+            # overlay 는 RGB 이고 저장 직전에 BGR 로 한 번 변환하므로 여기서는 RGB 순서로 채운다
             color = item.color
-            color_bgr = (color.blue(), color.green(), color.red())
+            color_rgb = (color.red(), color.green(), color.blue())
 
             points = []
             for pt in item.points:
@@ -1438,7 +1439,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             pts = np.array([points], dtype=np.int32)
 
             mask = np.zeros_like(overlay)
-            cv2.fillPoly(mask, pts, color_bgr)
+            cv2.fillPoly(mask, pts, color_rgb)
             overlay = cv2.addWeighted(overlay, 1, mask, alpha, 0)
 
         cv2.imwrite(save_path, cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR))
