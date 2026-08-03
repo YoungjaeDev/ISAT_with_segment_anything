@@ -1425,7 +1425,8 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         alpha = self.mainwindow.cfg["software"]["polygon_alpha_no_hover"]
 
         for item in self.items():
-            if not isinstance(item, Polygon) or item.is_drawing:
+            # OBB 는 Polygon 의 하위 클래스가 아니라 형제이므로 따로 나열해야 한다
+            if not isinstance(item, (Polygon, OBB)) or item.is_drawing:
                 continue
             # polygon 객체의 실제 표시 색상 사용
             # overlay 는 RGB 이고 저장 직전에 BGR 로 한 번 변환하므로 여기서는 RGB 순서로 채운다

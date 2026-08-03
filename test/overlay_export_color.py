@@ -19,7 +19,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ISAT.configs import SOFTWARE_CONFIG_FILE, load_config
 from ISAT.widgets.canvas import AnnotationScene
-from ISAT.widgets.polygon import Polygon
+from ISAT.widgets.polygon import OBB, Polygon
 
 IMAGE_SIZE = 100
 
@@ -47,6 +47,20 @@ def build_scene(color: str):
         polygon.addPoint(QtCore.QPointF(x, y))
     polygon.redraw()
     polygon.is_drawing = False
+    return scene
+
+
+def build_obb_scene(color: str):
+    scene = AnnotationScene(StubMainWindow())
+    scene.image_data = np.zeros((IMAGE_SIZE, IMAGE_SIZE, 3), dtype=np.uint8)
+    scene.setSceneRect(0, 0, IMAGE_SIZE, IMAGE_SIZE)
+
+    obb = OBB()
+    scene.addItem(obb)
+    obb.color = QtGui.QColor(color)
+    # 3번째 점에서 4 코너로 자동 완성된다
+    for x, y in [(20, 20), (80, 20), (80, 60)]:
+        obb.addPoint(QtCore.QPointF(x, y))
     return scene
 
 
@@ -80,6 +94,13 @@ def main():
     green = export_and_read(build_scene("#00ff00"))[50, 50]
     assert green[1] > 0 and green[0] == 0 and green[2] == 0, (
         f"초록 폴리곤 색이 어긋났다: BGR={green.tolist()}"
+    )
+
+    # OBB 는 Polygon 의 형제 클래스라 export 필터에서 빠지기 쉽다
+    obb = export_and_read(build_obb_scene("#ff0000"))
+    assert obb[40, 50].sum() > 0, "OBB 주석이 오버레이에 그려지지 않았다"
+    assert obb[40, 50][2] > 0 and obb[40, 50][0] == 0, (
+        f"OBB 색이 어긋났다: BGR={obb[40, 50].tolist()}"
     )
 
     print("overlay export color OK")
