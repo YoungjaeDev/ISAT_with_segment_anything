@@ -245,7 +245,7 @@ def text_prompt_and_save_to_isat_json(segany, prompts, images_root):
                         segmentation.append([int(x), int(y)])
 
                     # 新建目标
-                    obj = Object(category=prompt, group=1, segmentation=segmentation, area=0, layer=0, bbox=[], iscrowd=False,
+                    obj = Object(category=prompt, group=1, segmentation=segmentation, area=0, layer=1, bbox=[], iscrowd=False,
                                  note="", is_obb=False)
                     # 添加目标
                     anno.objects.append(obj)
