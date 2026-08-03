@@ -37,6 +37,7 @@ class Object:
         bbox: Union[list, tuple],
         iscrowd: bool = False,
         note: str = "",
+        is_obb: bool = False,
     ):
         self.category = category
         self.group = group
@@ -46,6 +47,7 @@ class Object:
         self.bbox = bbox
         self.iscrowd = iscrowd
         self.note = note
+        self.is_obb = is_obb
 
 
 class Annotation:
@@ -129,6 +131,7 @@ class Annotation:
                         area = obj.get("area", 0)
                         layer = obj.get("layer", 2)
                         bbox = obj.get("bbox", [])
+                        is_obb = obj.get("is_obb", False)
                         obj = Object(
                             category,
                             group,
@@ -138,6 +141,7 @@ class Annotation:
                             bbox,
                             iscrowd,
                             note,
+                            is_obb,
                         )
                         self.objects.append(obj)
                 else:
@@ -173,6 +177,7 @@ class Annotation:
             object["bbox"] = obj.bbox
             object["iscrowd"] = obj.iscrowd
             object["note"] = obj.note
+            object["is_obb"] = obj.is_obb
             dataset["objects"].append(object)
         with open(self.label_path, "w", encoding="utf-8") as f:
             dump(dataset, f, indent=4, ensure_ascii=False)

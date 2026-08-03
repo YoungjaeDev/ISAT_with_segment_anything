@@ -3,7 +3,109 @@
 ## Project Overview
 
 - `isat-sam` 패키지명으로 배포되는 PyQt5 기반 이미지 분할 주석 도구
+- Meta의 Segment Anything 계열(SAM/SAM2/SAM3/HQ-SAM/Mobile-SAM/Edge-SAM/Med2D-SAM)을 연동한다
 - 핵심 목표: 기존 동작을 깨지 않으면서 문서, 번역, 버그 수정, 유지보수를 안정적으로 진행
+
+## Commands
+
+```bash
+# 가상환경 생성 및 활성화
+uv venv
+.\.venv\Scripts\activate
+
+# editable 설치
+uv pip install -e .
+
+# 의존성 설치
+uv pip install -r requirements.txt
+
+# 문서 의존성
+uv pip install -r docs/requirements.txt
+
+# 앱 실행
+uv run python main.py
+uv run isat-sam
+
+# torch CUDA 설치 (RTX 3090, CUDA 12.4)
+uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+
+# 아이콘 리소스 컴파일 (아이콘 추가/변경 시)
+uv run python -m PyQt5.pyrcc_main ISAT/icons.qrc -o ISAT/icons_rc.py
+
+# 소스 배포본 빌드
+uv run python setup.py sdist
+
+# Windows EXE 빌드 (PyInstaller)
+./build_exe.bat
+```
+
+## Architecture
+
+### Entry point & startup sequence
+
+`main.py` → `ISAT/main.py:main()` → `ISAT/widgets/mainwindow.py:MainWindow`
+
+`MainWindow.__init__()` runs: `setupUi()` (Qt Designer UI) → `init_ui()` (docks/dialogs) → `reload_cfg()` (YAML configs) → `init_connect()` (signal wiring) → `InitSegAnyThread` (async SAM model load) → `CheckLatestVersionThread`.
+
+### ui/ vs widgets/ split
+
+- **`ISAT/ui/`** — auto-generated from Qt Designer `.ui` files. Pure layout classes (`Ui_MainWindow`, `Ui_SettingDialog`, etc.). Never hand-edit the `.py` files; edit the `.ui` files in Qt Designer.
+- **`ISAT/widgets/`** — hand-written logic classes. Pattern: `class SomeWidget(QDialog, Ui_SomeWidget)` inherits layout and adds behavior.
+
+### Two-layer data model
+
+- **`ISAT/annotation.py`** — disk representation. `Object` (category, group, segmentation vertices, area, bbox, layer, iscrowd, note) and `Annotation` (image metadata + list of Objects, load/save as JSON).
+- **`ISAT/widgets/polygon.py`** — visual representation. `BaseShape` holds the shared point/vertex logic; `Polygon` and `OBB` are `QGraphicsPolygonItem` subclasses that mix it in, with `BaseVertex` subclasses (`PolygonVertex`, `OBBVertex`, `LineVertex`) as children. Conversion: `to_object()` for save, `load_object()` for display.
+
+### Annotation data flow
+
+**Create:** user draws or SAM predicts mask → `cv2.findContours` → `Polygon` on scene → `mainwindow.polygons` list → on save: `polygon.to_object()` → `Annotation.objects` → `Annotation.save_annotation()`
+
+**Load:** `MainWindow.show_image()` → `Annotation(image_path, label_path)` → `annotation.load_annotation()` → for each Object, create `Polygon` with `load_object()` → add to scene + `mainwindow.polygons`
+
+### Canvas interaction
+
+`ISAT/widgets/canvas.py` has two classes:
+- **`AnnotationScene`** (`QGraphicsScene`) — mouse/key event handling. Mode machine: `STATUSMode` (VIEW/CREATE/EDIT/REPAINT) × `DRAWMode` (POLYGON/SEGMENTANYTHING_POINT/SEGMENTANYTHING_BOX/SEGMENTANYTHING_VISUAL/OBB).
+- **`AnnotationView`** (`QGraphicsView`) — zoom, pan, fit-to-window.
+
+### SAM model integration
+
+`ISAT/segment_any/segment_any.py` is the **facade**: `SegAny` for images, `SegAnyVideo` for video (SAM2/SAM2.1/SAM3). It auto-detects model type from the checkpoint filename string (e.g., `"mobile_sam"`, `"sam2"`, `"sam3"`, `"edge_sam"`) and dispatches to the correct sub-package predictor. All 8 SAM variants are **vendored directly** in the source tree under `ISAT/segment_any/` — they are not pip dependencies.
+
+`ISAT/segment_any/model_zoo.py` — registry of 20 model entries with download URLs (HuggingFace + ModelScope mirrors), memory/param counts, and image/video capability flags.
+
+### Config files
+
+- **`ISAT/software.yaml`** — software settings (mask_alpha, language, contour_mode, auto_save, bfloat16), keyboard shortcuts, and category labels with colors.
+- **`ISAT/isat.yaml`** — category labels only (name + hex color).
+- **`ISAT/configs.py`** — `ISAT_ROOT`, `CHECKPOINT_PATH`, enums (`STATUSMode`, `DRAWMode`, `MAPMode`, `CONTOURMode`, `CONTOURMethod`), YAML load/save helpers.
+- SAM2/SAM2.1 model architectures are defined as Hydra `@package _global_` YAML configs in `ISAT/segment_any/sam2/configs/`.
+
+Note: `*.yaml` is in `.gitignore`, so config changes are not tracked by default.
+
+### Concurrency model
+
+All heavy work runs on `QThread` subclasses communicating via `pyqtSignal`:
+- `InitSegAnyThread` — SAM model loading (several GB)
+- `SegAnyThread` — image encoder, caches features for ±1 adjacent images
+- `SegAnyVideoThread` — video frame-by-frame propagation
+- `DownloadThread` — checkpoint download with HTTP range resume
+- `GPUResource_Thread` — polls `nvidia-smi` for status bar display
+- `CheckLatestVersionThread` — PyPI version check
+- `AutoSegmentThread` — batch auto-segmentation
+
+### Format converters
+
+`ISAT/formats/` — all inherit from base `ISAT` class in `formats/isat.py`: `COCO`, `YOLO`, `LABELME`, `VOC`, `VOCDetect`. The `Converter` class in `widgets/converter_dialog.py` orchestrates them.
+
+### Plugin system
+
+Plugins are discovered via `entry_points` group `isat.plugins`, must subclass `ISAT/plugin_base.py:PluginBase`. `MainWindow` fires lifecycle hooks: `trigger_application_start/shutdown`, `trigger_before/after_image_open`, `trigger_before_annotations_save`, `trigger_after_annotation_changed`, `trigger_after_sam_encode_finished`.
+
+### Key dependencies
+
+`torch>=2.3.0`, `pyqt5`, `opencv_python_headless`, `shapely`, `pycocotools`, `hydra-core`, `timm`, `einops`, `pydicom`, `fuzzywuzzy`, `imgviz`, `orjson`
 
 ## Codebase Structure
 
@@ -16,8 +118,9 @@
 - `ISAT/configs.py` -- YAML 설정, 경로, enum
 - `icons/` -- SVG 아이콘 (중국어_영어 명명 규칙, 예: `保存_save.svg`)
 - `ISAT/icons.qrc` -- Qt 리소스 파일, `ISAT/icons_rc.py` -- 컴파일된 리소스
+- `tools/` -- 본체와 분리된 보조 도구 (SAM3 텍스트 프롬프트 기반 자동 예비 라벨링 등, Dockerfile로 별도 실행)
 - `docs/source/` -- Sphinx 원문 문서
-- `docs/source/locales/zh_CN/` -- 기존 중국어 번역 카탈로그
+- `docs/source/locales/zh_CN/`, `docs/source/locales/ko_KR/` -- 번역 카탈로그
 - `README.md`, `README-cn.md`, `README-ko.md` -- 루트 README
 
 ## Work Scope
@@ -48,33 +151,6 @@
 - Markdown과 reStructuredText 문법은 수정 의도가 없는 한 보존한다
 - 이미지 경로, 앵커, 배지, 표, 코드 블록 언어 태그는 깨지지 않게 유지한다
 
-## Commands
-
-```bash
-# 가상환경 생성 및 활성화
-uv venv
-.\.venv\Scripts\activate
-
-# editable 설치
-uv pip install -e .
-
-# 의존성 설치
-uv pip install -r requirements.txt
-
-# 문서 의존성
-uv pip install -r docs/requirements.txt
-
-# 앱 실행
-uv run python main.py
-uv run isat-sam
-
-# torch CUDA 설치 (RTX 3090, CUDA 12.4)
-uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-
-# 아이콘 리소스 컴파일 (아이콘 추가/변경 시)
-uv run python -m PyQt5.pyrcc_main ISAT/icons.qrc -o ISAT/icons_rc.py
-```
-
 ## Verification
 
 작업 후 가능한 범위에서 아래를 우선 검토한다.
@@ -89,13 +165,14 @@ uv run python main.py
 # 문서 빌드
 uv run sphinx-build -b html -D language=en docs/source docs/build/html/en
 uv run sphinx-build -b html -D language=zh_CN docs/source docs/build/html/zh_CN
+uv run sphinx-build -b html -D language=ko_KR docs/source docs/build/html/ko_KR
 
 # gettext 갱신
 uv run sphinx-build -b gettext docs/source docs/build/gettext
-uv run sphinx-intl update -p docs/build/gettext -l zh_CN -d docs/source/locales
+uv run sphinx-intl update -p docs/build/gettext -l zh_CN -l ko_KR -d docs/source/locales
 ```
 
-자동화된 전체 테스트/린트 설정은 저장소에 잡혀 있지 않다. 없는 검증을 했다고 보고하지 않는다.
+자동화된 테스트나 린트 설정은 저장소에 잡혀 있지 않다. `test/` 디렉터리에는 단발성 스크립트 두 개(`coco_display.py`, `f32_vs_bf16.py`)만 있고, 실제 검증은 GUI 앱을 직접 실행해서 한다. 없는 검증을 했다고 보고하지 않는다.
 
 ## Pre-commit Checklist
 
