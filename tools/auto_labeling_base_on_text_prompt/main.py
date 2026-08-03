@@ -236,6 +236,10 @@ def text_prompt_and_save_to_isat_json(segany, prompts, images_root):
                 for i in range(num_masks):
                     # mask转轮廓
                     contours, hierarchy = mask_to_polygon(masks[i])
+                    # 빈 마스크면 윤곽이 없다. 여기서 죽으면 바깥 except 가 잡아
+                    # save_annotation 을 건너뛰므로 이 이미지의 나머지 결과까지 잃는다
+                    if not contours:
+                        continue
                     contour = contours[0]
 
                     # 轮廓转polygon顶点

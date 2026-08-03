@@ -775,13 +775,27 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         cos_a = math.cos(delta_angle)
         sin_a = math.sin(delta_angle)
 
+        rotated = []
         for i in range(4):
             dx = self.points[i].x() - c.x()
             dy = self.points[i].y() - c.y()
-            self.points[i] = QtCore.QPointF(
-                c.x() + dx * cos_a - dy * sin_a,
-                c.y() + dx * sin_a + dy * cos_a,
+            rotated.append(
+                QtCore.QPointF(
+                    c.x() + dx * cos_a - dy * sin_a,
+                    c.y() + dx * sin_a + dy * cos_a,
+                )
             )
+
+        # moveVertex 는 경계 클램프를 우회하므로, 회전 결과가 이미지를 벗어나면
+        # 음수나 초과 좌표가 그대로 저장된다. 그런 회전은 아예 하지 않는다
+        scene = self.scene()
+        if scene is not None:
+            bounds = scene.sceneRect()
+            if any(not bounds.contains(self.mapToScene(p)) for p in rotated):
+                return
+
+        for i in range(4):
+            self.points[i] = rotated[i]
             self.moveVertex(i, self.mapToScene(self.points[i]))
 
         self.redraw()
