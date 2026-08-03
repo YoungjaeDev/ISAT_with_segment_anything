@@ -520,6 +520,11 @@ class InitSegAnyThread(QThread):
                 except Exception:
                     pass
 
+            # release() 는 predictor 를 남겨두므로 지역 참조까지 끊어야 모델 텐서가 풀린다.
+            # 새 모델을 만들기 전에 끊지 않으면 구/신 모델이 GPU 에 함께 올라가 OOM 이 난다.
+            old_segany = None
+            old_segany_video = None
+
             # 确保所有 CUDA 操作完成后再释放缓存，释放 GIL 给主线程
             if torch.cuda.is_available():
                 torch.cuda.synchronize()

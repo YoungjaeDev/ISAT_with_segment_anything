@@ -713,7 +713,9 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     self.removeItem(item)
                     del item
                 # 如果剩余顶点少于三个，删除多边形
-                if len(polygon.vertices) < 3:
+                # OBB 는 코너 4개가 사각형을 이루므로 하나라도 빠지면 도형 전체를 지운다.
+                # 3개만 남기면 저장 후 다시 열 때 자동 완성이 형상을 바꿔버린다.
+                if len(polygon.vertices) < 3 or isinstance(polygon, OBB):
                     if polygon in self.mainwindow.polygons:
                         self.mainwindow.polygons.remove(polygon)
                         self.mainwindow.annos_dock_widget.listwidget_remove_polygon(
