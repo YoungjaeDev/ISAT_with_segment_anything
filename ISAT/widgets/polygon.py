@@ -673,6 +673,19 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
             return
         super(OBB, self).addPoint(point)
 
+    def _within_scene(self, points) -> bool:
+        """Return True when every point (in item coordinates) stays in the image.
+
+        Corners derived from a drag, a rotation or the 3-click completion are
+        written straight into ``self.points`` and never pass through
+        ``BaseVertex`` clamping, so they have to be checked here.
+        """
+        scene = self.scene()
+        if scene is None:
+            return True
+        bounds = scene.sceneRect()
+        return all(bounds.contains(self.mapToScene(point)) for point in points)
+
     def _complete_rectangle(self) -> bool:
         """Compute the true rectangle from 3 real corners.
 
@@ -703,6 +716,10 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
 
         p3 = QtCore.QPointF(p1.x() + t * d_perp.x(), p1.y() + t * d_perp.y())
         p2 = p3 - edge  # == P0 + t * d_perp
+
+        # 세 번째 클릭이 안쪽이어도 투영된 코너는 이미지 밖으로 나갈 수 있다
+        if not self._within_scene((p3, p2)):
+            return False
 
         # Replace the clicked corner with its projected position (P3)
         self.points[2] = p3
@@ -750,16 +767,23 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         hw = half_diag.x() * d1.x() + half_diag.y() * d1.y()  # dot(d1, half_diag)
         hh = half_diag.x() * d2.x() + half_diag.y() * d2.y()  # dot(d2, half_diag)
 
-        self.points[dragged_idx] = new_pos
-        self.points[fixed_idx] = fixed_pos
-        self.points[(dragged_idx + 1) % 4] = QtCore.QPointF(
+        adjacent_1 = QtCore.QPointF(
             center.x() - d1.x() * hw + d2.x() * hh,
             center.y() - d1.y() * hw + d2.y() * hh,
         )
-        self.points[(dragged_idx + 3) % 4] = QtCore.QPointF(
+        adjacent_2 = QtCore.QPointF(
             center.x() + d1.x() * hw - d2.x() * hh,
             center.y() + d1.y() * hw - d2.y() * hh,
         )
+
+        # 드래그한 코너만 클램프되므로 파생된 두 코너는 따로 확인해야 한다
+        if not self._within_scene((adjacent_1, adjacent_2)):
+            return
+
+        self.points[dragged_idx] = new_pos
+        self.points[fixed_idx] = fixed_pos
+        self.points[(dragged_idx + 1) % 4] = adjacent_1
+        self.points[(dragged_idx + 3) % 4] = adjacent_2
 
         # Sync vertex scene positions
         for i in range(4):
@@ -786,13 +810,9 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
                 )
             )
 
-        # moveVertex 는 경계 클램프를 우회하므로, 회전 결과가 이미지를 벗어나면
-        # 음수나 초과 좌표가 그대로 저장된다. 그런 회전은 아예 하지 않는다
-        scene = self.scene()
-        if scene is not None:
-            bounds = scene.sceneRect()
-            if any(not bounds.contains(self.mapToScene(p)) for p in rotated):
-                return
+        # 회전 결과가 이미지를 벗어나면 음수나 초과 좌표가 그대로 저장된다
+        if not self._within_scene(rotated):
+            return
 
         for i in range(4):
             self.points[i] = rotated[i]

@@ -58,6 +58,18 @@ def main():
     assert normal.is_drawing is False, "정상 OBB 인데 drawing 상태가 남았다"
     assert normal.area > 0, f"면적이 계산되지 않았다: {normal.area}"
 
+    # 세 클릭이 모두 이미지 안이어도 투영된 코너는 밖으로 나갈 수 있다
+    projected_out = OBB()
+    scene.addItem(projected_out)
+    for x, y in [(0, 50), (99, 0), (0, 0)]:
+        projected_out.addPoint(QtCore.QPointF(x, y))
+
+    assert len(projected_out.points) == 2, (
+        f"이미지를 벗어나는 완성이 적용됐다: "
+        f"{[(p.x(), p.y()) for p in projected_out.points]}"
+    )
+    assert projected_out.is_drawing is True, "완성되지 않았는데 drawing 상태가 풀렸다"
+
     # 이미지를 꽉 채운 OBB 는 회전하면 코너가 밖으로 나가므로 회전을 거부해야 한다
     edge = OBB()
     scene.addItem(edge)
