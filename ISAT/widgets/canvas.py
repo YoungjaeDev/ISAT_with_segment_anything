@@ -1027,7 +1027,10 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
             if self.repaint_start_vertex is None:
                 # 开始repaint
-                if self.hovered_vertex is not None:
+                # OBB 는 4개 코너가 사각형 제약을 받으므로 자유 형상 repaint 대상에서 제외한다
+                if self.hovered_vertex is not None and not isinstance(
+                    self.hovered_vertex.parent_shape, OBB
+                ):
                     self.repaint_start_vertex = self.hovered_vertex
                     self.repaint_line_item.addPoint(
                         self.repaint_start_vertex.pos()

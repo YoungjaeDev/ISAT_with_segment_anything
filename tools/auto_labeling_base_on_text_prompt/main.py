@@ -226,6 +226,7 @@ def text_prompt_and_save_to_isat_json(segany, prompts, images_root):
 
             # 预测
             image = Image.open(image_path).convert("RGB")
+            group = 0
             for prompt in prompts:
                 masks, scores = segany.predictor.predict_with_text_prompt(image, prompt)
 
@@ -246,7 +247,14 @@ def text_prompt_and_save_to_isat_json(segany, prompts, images_root):
                         segmentation.append([int(x), int(y)])
 
                     # 新建目标
-                    obj = Object(category=prompt, group=1, segmentation=segmentation, area=0, layer=0, bbox=[], iscrowd=False,
+                    # group 은 ISAT 인스턴스 ID 라서 검출 결과마다 달라야 한다.
+                    # 상수로 두면 COCO/YOLO 내보내기가 같은 카테고리를 하나로 합친다.
+                    group += 1
+                    xs = [point[0] for point in segmentation]
+                    ys = [point[1] for point in segmentation]
+                    obj = Object(category=prompt, group=group, segmentation=segmentation,
+                                 area=float(cv2.contourArea(contour)), layer=0,
+                                 bbox=[min(xs), min(ys), max(xs), max(ys)], iscrowd=False,
                                  note="", is_obb=False)
                     # 添加目标
                     anno.objects.append(obj)

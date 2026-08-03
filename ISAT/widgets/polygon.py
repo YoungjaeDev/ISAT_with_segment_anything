@@ -653,7 +653,10 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
             return
 
         if len(self.points) == 3:
-            self._complete_rectangle()
+            if not self._complete_rectangle():
+                # 사각형을 만들 수 없으면 방금 찍은 점을 되돌려 계속 그리게 한다
+                self.removePoint(2)
+                return
             self.redraw()
             self.is_drawing = False
             self.area = self.calculate_area()
@@ -670,7 +673,7 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
             return
         super(OBB, self).addPoint(point)
 
-    def _complete_rectangle(self):
+    def _complete_rectangle(self) -> bool:
         """Compute the true rectangle from 3 real corners.
 
         Called when ``self.points == [P0, P1, P_click]`` where:
@@ -678,6 +681,9 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         * P_click — 3rd corner (click 3), projected onto perpendicular through P1
 
         After this call ``self.points`` is ``[P0, P1, P3, P2]`` (clockwise).
+
+        Returns ``False`` without touching the points when P0 and P1 coincide,
+        since a zero-length first edge defines no rectangle.
         """
         p0 = self.points[0]
         p1 = self.points[1]
@@ -690,6 +696,9 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         # Project p_click onto the perpendicular line from P1
         v = p_click - p1
         denom = d_perp.x() * d_perp.x() + d_perp.y() * d_perp.y()
+        # 첫 두 점이 겹치면 denom 이 0 이라 0 으로 나누게 된다
+        if denom == 0:
+            return False
         t = (v.x() * d_perp.x() + v.y() * d_perp.y()) / denom
 
         p3 = QtCore.QPointF(p1.x() + t * d_perp.x(), p1.y() + t * d_perp.y())
@@ -706,6 +715,7 @@ class OBB(QtWidgets.QGraphicsPolygonItem, BaseShape):
         self.scene().addItem(vertex)
         self.vertices.append(vertex)
         vertex.setPos(p2)
+        return True
 
     def movePoint(self, index: int, point: QtCore.QPointF):
         """Move a corner while maintaining the rectangular constraint.
