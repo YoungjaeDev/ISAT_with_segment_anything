@@ -16,6 +16,8 @@ torch.cuda.is_available()
 
 
 def main():
+    from ISAT.banner import print_banner
+    print_banner()
     app = QtWidgets.QApplication([""])
     mainwindow = MainWindow()
     mainwindow.show()
