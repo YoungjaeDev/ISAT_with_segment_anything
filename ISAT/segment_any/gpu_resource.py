@@ -19,9 +19,13 @@ class GPUResource_Thread(QThread):
 
     message = pyqtSignal(str)
 
+    # nvidia-smi 를 매 반복 띄우므로 간격을 두지 않으면 CPU 를 그대로 먹는다
+    POLL_INTERVAL_MS = 1000
+
     def __init__(self, gpu_id: int = 0):
         super(GPUResource_Thread, self).__init__()
         self.gpu_id = gpu_id
+        self._running = True
 
         if osplatform == "Windows":
             self.command = "nvidia-smi -q -d MEMORY -i {} | findstr".format(self.gpu_id)
@@ -39,15 +43,24 @@ class GPUResource_Thread(QThread):
             self.total = "none"
 
     def run(self):
-        while True:
+        while self._running:
             try:
                 r = os.popen("{} Used".format(self.command)).readline()
                 used = r.split(":")[-1].strip().split(" ")[0]
                 self.message.emit("cuda: {}/{}MiB".format(used, self.total))
             except:
                 self.message.emit("cuda: {}/{}MiB".format("-", "-"))
+            self.msleep(self.POLL_INTERVAL_MS)
+
+    def stop(self):
+        """Ask the polling loop to finish. Call wait() afterwards to join."""
+        self._running = False
 
     def __del__(self):
-        self.message.emit("Ground filter thread | Wait for thread to exit.")
-        self.wait()
-        self.message.emit("Ground filter thread | Thread exited.")
+        # 플래그를 내리지 않으면 wait() 가 영원히 돌아오지 않는다
+        self._running = False
+        try:
+            self.wait()
+        except RuntimeError:
+            # PyQt 가 C++ 객체를 먼저 지운 뒤에 __del__ 이 도는 경우
+            pass
