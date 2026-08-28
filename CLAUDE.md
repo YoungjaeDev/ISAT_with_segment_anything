@@ -26,8 +26,19 @@ uv pip install -r docs/requirements.txt
 uv run python main.py
 uv run isat-sam
 
-# torch CUDA 설치 (RTX 3090, CUDA 12.4)
+# torch CUDA 설치
+# cu128 은 sm_75~sm_120 을 모두 담고 있어 RTX 3090(sm_86)/RTX 5070 Ti(sm_120) 양쪽에서 동작한다.
+uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+# 드라이버가 낮아 cu128 을 못 쓰는 Ampere 전용 환경(RTX 3090 등)에서만 cu124 로 내린다.
+# Blackwell(RTX 50 시리즈)은 cu124 에 sm_120 커널이 없어 동작하지 않는다.
 uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+
+# 이미 CPU 빌드가 깔려 있으면 uv 가 "이미 충족됨"으로 넘어가므로 --reinstall 을 붙인다.
+uv pip install --reinstall torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+# 설치 확인 (arch 목록에 자기 GPU 의 sm_XX 가 있어야 한다)
+uv run python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available()); print(torch.cuda.get_arch_list())"
 
 # SAM3 체크포인트 다운로드 (facebook/sam3 는 gated 저장소)
 # 1) https://huggingface.co/facebook/sam3 에서 라이선스 동의
