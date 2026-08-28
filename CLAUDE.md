@@ -29,6 +29,11 @@ uv run isat-sam
 # torch CUDA 설치 (RTX 3090, CUDA 12.4)
 uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
 
+# SAM3 체크포인트 다운로드 (facebook/sam3 는 gated 저장소)
+# 1) https://huggingface.co/facebook/sam3 에서 라이선스 동의
+# 2) hf auth login  (또는 HF_TOKEN 환경변수)
+uv run hf download facebook/sam3 sam3.pt --local-dir ISAT/checkpoints
+
 # 아이콘 리소스 컴파일 (아이콘 추가/변경 시)
 uv run python -m PyQt5.pyrcc_main ISAT/icons.qrc -o ISAT/icons_rc.py
 
@@ -116,6 +121,7 @@ Plugins are discovered via `entry_points` group `isat.plugins`, must subclass `I
 - `ISAT/segment_any/` -- SAM 계열 모델 연동
 - `ISAT/annotation.py` -- 주석 데이터 모델과 JSON 저장/로드
 - `ISAT/configs.py` -- YAML 설정, 경로, enum
+- `ISAT/checkpoints/` -- 모델 체크포인트 저장 위치 (git 추적 제외, `CHECKPOINT_PATH`)
 - `icons/` -- SVG 아이콘 (중국어_영어 명명 규칙, 예: `保存_save.svg`)
 - `ISAT/icons.qrc` -- Qt 리소스 파일, `ISAT/icons_rc.py` -- 컴파일된 리소스
 - `tools/` -- 본체와 분리된 보조 도구 (SAM3 텍스트 프롬프트 기반 자동 예비 라벨링 등, Dockerfile로 별도 실행)
