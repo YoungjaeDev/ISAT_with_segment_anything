@@ -74,7 +74,7 @@ For the latest documentation, see [Documentation in English](https://isat-sam.re
 # Star History
 
 **Please support the project with a Star.**
-[![Star History Chart](https://api.star-history.com/svg?repos=yatengLG/ISAT_with_segment_anything&type=Date)](https://star-history.com/#yatengLG/ISAT_with_segment_anything&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=yatengLG/ISAT_with_segment_anything&type=Date)](https://star-history.dera.page/#yatengLG/ISAT_with_segment_anything&Date)
 
 
 # Contributors

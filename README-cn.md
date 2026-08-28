@@ -73,7 +73,7 @@ ISAT 专注于图像分割，目标是提供更顺手、更实用的标注工作
 # Star History
 
 **欢迎给项目点个 Star 支持一下。**
-[![Star History Chart](https://api.star-history.com/svg?repos=yatengLG/ISAT_with_segment_anything&type=Date)](https://star-history.com/#yatengLG/ISAT_with_segment_anything&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=yatengLG/ISAT_with_segment_anything&type=Date)](https://star-history.dera.page/#yatengLG/ISAT_with_segment_anything&Date)
 
 
 # 核心贡献者

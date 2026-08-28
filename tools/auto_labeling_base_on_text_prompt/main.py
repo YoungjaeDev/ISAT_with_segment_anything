@@ -215,10 +215,9 @@ def mask_to_polygon(mask: np.ndarray):
 
 def text_prompt_and_save_to_isat_json(segany, prompts, images_root):
     images_root = Path(images_root)
-    bar = tqdm(images_root.iterdir())
+    image_paths = list(images_root.glob("*.jpg"))
+    bar = tqdm(image_paths)
     for image_path in bar:
-        if image_path.suffix != ".jpg":
-            continue
         label_path = image_path.with_suffix(".json")
 
         try:
@@ -258,7 +257,7 @@ def text_prompt_and_save_to_isat_json(segany, prompts, images_root):
                     xs = [point[0] for point in segmentation]
                     ys = [point[1] for point in segmentation]
                     obj = Object(category=prompt, group=group, segmentation=segmentation,
-                                 area=float(cv2.contourArea(contour)), layer=0,
+                                 area=float(cv2.contourArea(contour)), layer=1,
                                  bbox=[min(xs), min(ys), max(xs), max(ys)], iscrowd=False,
                                  note="", is_obb=False)
                     # 添加目标
