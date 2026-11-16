@@ -536,10 +536,12 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     )
                 self.mask = None
         elif self.draw_mode in (DRAWMode.POLYGON, DRAWMode.ELLIPSE):
-            if self.current_graph is None or len(self.current_graph.points) < 1:
+            if self.current_graph is None:
                 return
 
             if self.draw_mode == DRAWMode.POLYGON:
+                if len(self.current_graph.points) < 1:
+                    return
                 # 移除鼠标移动点
                 self.current_graph.removePoint(len(self.current_graph.points) - 1)
 
@@ -1527,7 +1529,7 @@ class AnnotationView(QtWidgets.QGraphicsView):
                 if scene.mode == STATUSMode.VIEW:
                     scene.start_draw_obb()
             elif event.key() == QtCore.Qt.Key.Key_X:
-                # Start ellipse drawing (VIEW mode only)
+                # 타원 그리기 시작 (VIEW 모드에서만)
                 if scene.mode == STATUSMode.VIEW:
                     scene.start_draw_ellipse()
             elif event.key() == QtCore.Qt.Key.Key_N:

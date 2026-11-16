@@ -117,6 +117,15 @@ def main():
     scene, mainwindow = make_scene()
     draw(scene, (30, 30), (30, 30))
     assert mainwindow.polygons == [], "크기 0 인 타원이 추가됐다"
+    assert scene.mode == STATUSMode.VIEW, f"크기 0 인 타원을 끝냈는데 create 모드에 남았다: {scene.mode}"
+
+    # 첫 클릭만 하고 완료를 누르면 빈 도형을 버리고 view 모드로 돌아와야 한다
+    scene, mainwindow = make_scene()
+    scene.start_draw_ellipse()
+    click(scene, 30, 30)
+    scene.finish_draw()
+    assert mainwindow.polygons == [], "첫 클릭만 한 타원이 추가됐다"
+    assert scene.mode == STATUSMode.VIEW, f"첫 클릭 후 완료했는데 create 모드에 남았다: {scene.mode}"
 
     # 그리던 중 취소하면 다음 번에 이전 앵커가 남아 있지 않아야 한다
     scene, mainwindow = make_scene()
