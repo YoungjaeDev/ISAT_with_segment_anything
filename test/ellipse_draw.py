@@ -19,7 +19,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ISAT.configs import SOFTWARE_CONFIG_FILE, STATUSMode, load_config
-from ISAT.widgets.canvas import AnnotationScene
+from ISAT.widgets.canvas import AnnotationScene, AnnotationView
 from ISAT.widgets.polygon import Polygon
 
 
@@ -135,6 +135,16 @@ def main():
     draw(scene, (20, 10), (80, 50))
     assert len(mainwindow.polygons) == 1, "취소 후 다시 그리면 폴리곤이 추가되지 않는다"
     assert_on_ellipse(mainwindow.polygons[0], 50, 30, 30, 20, "취소 후 타원")
+
+    # 주석을 만들 수 없는 이미지에서는 X 키로 타원 그리기가 시작되면 안 된다
+    for allowed, expected in [(False, STATUSMode.VIEW), (True, STATUSMode.CREATE)]:
+        scene, mainwindow = make_scene()
+        mainwindow.can_be_annotated = allowed
+        scene.view = AnnotationView()
+        scene.view.setScene(scene)
+        key = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, QtCore.Qt.Key.Key_X, QtCore.Qt.KeyboardModifier.NoModifier)
+        QtWidgets.QApplication.sendEvent(scene.view, key)
+        assert scene.mode == expected, f"can_be_annotated={allowed} 인데 X 키 후 모드가 {scene.mode}"
 
     print("ok")
     del app

@@ -1529,8 +1529,8 @@ class AnnotationView(QtWidgets.QGraphicsView):
                 if scene.mode == STATUSMode.VIEW:
                     scene.start_draw_obb()
             elif event.key() == QtCore.Qt.Key.Key_X:
-                # 타원 그리기 시작 (VIEW 모드에서만)
-                if scene.mode == STATUSMode.VIEW:
+                # 타원 그리기 시작 (VIEW 모드이고 주석을 만들 수 있는 이미지에서만)
+                if scene.mode == STATUSMode.VIEW and scene.mainwindow.can_be_annotated:
                     scene.start_draw_ellipse()
             elif event.key() == QtCore.Qt.Key.Key_N:
                 # Rotate selected OBB counter-clockwise
