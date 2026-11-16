@@ -197,3 +197,17 @@ uv run sphinx-intl update -p docs/build/gettext -l zh_CN -l ko_KR -d docs/source
 - 번역 변경이면 문체와 용어가 문서 전체에서 일관적인지 확인
 - 링크, 제목 레벨, 목록, 코드 블록이 깨지지 않았는지 확인
 - 검증하지 못한 항목이 있으면 그대로 명시
+
+## Agent skills
+
+### Issue tracker
+
+이슈와 PR은 포크 `YoungjaeDev/ISAT_with_segment_anything` 의 GitHub Issues 에서 관리한다. `gh` 가 기본으로 upstream 을 가리키므로 항상 `-R YoungjaeDev/ISAT_with_segment_anything` 를 붙인다. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+기본 라벨 5개(`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`)를 그대로 쓴다. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+single-context: 저장소 루트의 `GLOSSARY.md` 와 `docs/adr/`. See `docs/agents/domain.md`.
