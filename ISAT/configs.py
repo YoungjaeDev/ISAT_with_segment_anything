@@ -82,6 +82,8 @@ class DRAWMode(Enum):
     """Segment anything with visual prompt."""
     OBB = 4
     """Draw oriented bounding box (3-click, auto-completed rectangle)."""
+    ELLIPSE = 5
+    """Draw an ellipse inscribed in a 2-click box, stored as a polygon."""
 
 
 class MAPMode(Enum):
