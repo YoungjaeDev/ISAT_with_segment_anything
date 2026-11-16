@@ -402,6 +402,34 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         self.draw_mode = DRAWMode.OBB
         self.start_draw()
 
+    def start_draw_ellipse(self):
+        """Start drawing an ellipse inscribed in a 2-click box, stored as a polygon."""
+        self.ellipse_anchor = None
+        self.draw_mode = DRAWMode.ELLIPSE
+        self.start_draw()
+
+    def _update_ellipse(self, pos: QtCore.QPointF):
+        """Rebuild the current polygon as the ellipse inscribed in the anchor-to-pos box."""
+        anchor = self.ellipse_anchor
+        dx, dy = pos.x() - anchor.x(), pos.y() - anchor.y()
+        if self.shift_pressed:
+            # Shift: 짧은 변에 맞춘 정사각형으로 고정해 정원을 만든다
+            side = min(abs(dx), abs(dy))
+            dx, dy = math.copysign(side, dx), math.copysign(side, dy)
+        rx, ry = abs(dx) / 2, abs(dy) / 2
+        self.current_graph.delete()
+        if rx < 0.5 or ry < 0.5:
+            self.current_graph.setPolygon(QtGui.QPolygonF())
+            return
+        cx, cy = anchor.x() + dx / 2, anchor.y() + dy / 2
+        # shortcut: 꼭짓점 36 개 고정(반지름 500px 에서 오차 약 1.9px), 더 큰 원이 각져 보이면 둘레 길이에 비례시킨다
+        for i in range(36):
+            angle = math.radians(i * 10)
+            self.current_graph.addPoint(
+                QtCore.QPointF(cx + rx * math.cos(angle), cy + ry * math.sin(angle))
+            )
+        self.current_graph.redraw()
+
     def start_draw(self):
         """Try change to create mode and add a empty polygon for annotation ops."""
         # 只有view模式时，才能切换create模式
@@ -507,12 +535,15 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                         str(self.mainwindow.current_group)
                     )
                 self.mask = None
-        elif self.draw_mode == DRAWMode.POLYGON:
-            if self.current_graph is None or len(self.current_graph.points) < 1:
+        elif self.draw_mode in (DRAWMode.POLYGON, DRAWMode.ELLIPSE):
+            if self.current_graph is None:
                 return
 
-            # 移除鼠标移动点
-            self.current_graph.removePoint(len(self.current_graph.points) - 1)
+            if self.draw_mode == DRAWMode.POLYGON:
+                if len(self.current_graph.points) < 1:
+                    return
+                # 移除鼠标移动点
+                self.current_graph.removePoint(len(self.current_graph.points) - 1)
 
             # 单点，删除
             if len(self.current_graph.points) < 2:
@@ -987,6 +1018,12 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                             pos = point
                         self.current_graph.addPoint(pos)
                         self.current_graph._add_trailing(pos)  # trailing point (no auto-complete)
+                elif self.draw_mode == DRAWMode.ELLIPSE:
+                    if self.ellipse_anchor is None:
+                        self.ellipse_anchor = QtCore.QPointF(pos)
+                    else:
+                        self._update_ellipse(pos)
+                        self.finish_draw()
                 else:
                     raise ValueError(
                         "The draw mode named {} not supported.".format(
@@ -1007,6 +1044,8 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                 elif self.draw_mode == DRAWMode.POLYGON:
                     pass
                 elif self.draw_mode == DRAWMode.OBB:
+                    pass
+                elif self.draw_mode == DRAWMode.ELLIPSE:
                     pass
                 elif self.draw_mode == DRAWMode.SEGMENTANYTHING_BOX:
                     try:
@@ -1245,6 +1284,10 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                         last_point = self.current_graph.points[-2]
                         pos = self._constrain_to_angle(last_point, pos)
                     self.current_graph.movePoint(len(self.current_graph.points) - 1, pos)
+
+            elif self.draw_mode == DRAWMode.ELLIPSE:
+                if self.ellipse_anchor is not None:
+                    self._update_ellipse(pos)
 
             elif self.draw_mode == DRAWMode.SEGMENTANYTHING_BOX:
                 if self.prompt_box_item is not None:
@@ -1485,6 +1528,10 @@ class AnnotationView(QtWidgets.QGraphicsView):
                 # Start OBB drawing (VIEW mode only)
                 if scene.mode == STATUSMode.VIEW:
                     scene.start_draw_obb()
+            elif event.key() == QtCore.Qt.Key.Key_X:
+                # 타원 그리기 시작 (VIEW 모드에서만)
+                if scene.mode == STATUSMode.VIEW:
+                    scene.start_draw_ellipse()
             elif event.key() == QtCore.Qt.Key.Key_N:
                 # Rotate selected OBB counter-clockwise
                 scene.rotate_selected_obb(math.radians(15))
