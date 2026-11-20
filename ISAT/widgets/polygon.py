@@ -4,10 +4,42 @@
 import math
 import typing
 
+import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ISAT.annotation import Object
 from ISAT.configs import STATUSMode
+
+
+def smooth_closed_points(points, sigma_ratio=0.008):
+    """Smooth a closed outline with a Gaussian along its arc length.
+
+    Arguments:
+        points: [(x, y), ...] of a closed polygon.
+        sigma_ratio: Gaussian sigma as a fraction of the perimeter.
+
+    Returns:
+        The same number of (x, y) points, each moved to the smoothed curve at
+        its own arc-length position, so the vertex layout is kept.
+    """
+    count = len(points)
+    if count < 3:
+        return list(points)
+    pts = np.asarray(points, dtype=float)
+    closed = np.vstack([pts, pts[:1]])
+    arc = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(closed, axis=0), axis=1))])
+    if arc[-1] == 0:
+        return list(points)
+    samples = max(240, 4 * count)
+    grid = np.linspace(0, arc[-1], samples, endpoint=False)
+    dense = np.column_stack([np.interp(grid, arc, closed[:, i]) for i in range(2)])
+    offset = np.minimum(np.arange(samples), samples - np.arange(samples))
+    kernel = np.exp(-0.5 * (offset / (sigma_ratio * samples)) ** 2)
+    kernel /= kernel.sum()
+    # 닫힌 곡선이라 원형 convolution 으로 평균한다
+    smoothed = np.fft.ifft(np.fft.fft(dense, axis=0) * np.fft.fft(kernel)[:, None], axis=0).real
+    out = np.column_stack([np.interp(arc[:-1], grid, smoothed[:, i], period=arc[-1]) for i in range(2)])
+    return [(float(x), float(y)) for x, y in out]
 
 
 # ============================================================
@@ -272,6 +304,7 @@ class Polygon(QtWidgets.QGraphicsPolygonItem, BaseShape):
     def __init__(self):
         QtWidgets.QGraphicsPolygonItem.__init__(self, parent=None)
         self._init_shape(PolygonVertex)
+        self._points_before_smooth = None
 
         self.line_width = 1
         self.hover_alpha = 150
@@ -323,6 +356,37 @@ class Polygon(QtWidgets.QGraphicsPolygonItem, BaseShape):
         vertex.setEnabled(False)
         vertex.setPos(point)
         vertex.setEnabled(True)
+
+    # ---- outline smoothing ---------------------------------------------------
+
+    def _replace_points(self, xy):
+        """Replace every point with *xy* (same count) and keep the handles in sync."""
+        self.points = [QtCore.QPointF(x, y) for x, y in xy]
+        for index, point in enumerate(self.points):
+            self.moveVertex(index, self.mapToScene(point))
+        self.redraw()
+        self.area = self.calculate_area()
+
+    def smooth(self) -> bool:
+        """Smooth the outline in place. Returns False when nothing changed."""
+        before = [(p.x(), p.y()) for p in self.points]
+        after = smooth_closed_points(before)
+        if after == before:
+            return False
+        if self._points_before_smooth is None:
+            self._points_before_smooth = before
+        self._replace_points(after)
+        return True
+
+    def restore_before_smooth(self) -> bool:
+        """Put back the outline from before the first smooth. Returns False when there is none."""
+        before = self._points_before_smooth
+        # 편 뒤에 꼭짓점을 넣거나 뺐으면 핸들 수가 달라 되돌릴 수 없다
+        if before is None or len(before) != len(self.points):
+            return False
+        self._points_before_smooth = None
+        self._replace_points(before)
+        return True
 
     # ---- Qt item events ------------------------------------------------------
 

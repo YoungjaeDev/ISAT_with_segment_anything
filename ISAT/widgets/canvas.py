@@ -722,6 +722,18 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         if rotated:
             self.mainwindow.set_saved_state(False)
 
+    def smooth_selected_polygons(self, restore: bool = False):
+        """Smooth the outline of every selected Polygon, or restore it when *restore* is set."""
+        if self.mode != STATUSMode.VIEW:
+            return
+        changed = False
+        for item in self.selectedItems():
+            if isinstance(item, Polygon) and item in self.mainwindow.polygons:
+                if item.restore_before_smooth() if restore else item.smooth():
+                    changed = True
+        if changed:
+            self.mainwindow.set_saved_state(False)
+
     def delete_selected_graph(self):
         """Delete selected graph. Graph can be polygons or vertices, support multiple selection modes by pressing the CTRL key."""
         deleted_layer = None
@@ -1532,6 +1544,11 @@ class AnnotationView(QtWidgets.QGraphicsView):
                 # 타원 그리기 시작 (VIEW 모드이고 주석을 만들 수 있는 이미지에서만)
                 if scene.mode == STATUSMode.VIEW and scene.mainwindow.can_be_annotated:
                     scene.start_draw_ellipse()
+            elif event.key() == QtCore.Qt.Key.Key_G:
+                # 선택한 폴리곤의 윤곽을 편다. Shift 와 함께 누르면 펴기 전으로 되돌린다
+                scene.smooth_selected_polygons(
+                    restore=bool(event.modifiers() & QtCore.Qt.KeyboardModifier.ShiftModifier)
+                )
             elif event.key() == QtCore.Qt.Key.Key_N:
                 # Rotate selected OBB counter-clockwise
                 scene.rotate_selected_obb(math.radians(15))
