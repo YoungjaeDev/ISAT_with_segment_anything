@@ -129,6 +129,40 @@ def main():
     for vertex, point in zip(moved.vertices, moved.points):
         assert (vertex.pos() - moved.mapToScene(point)).manhattanLength() < 1e-6, "옮긴 폴리곤의 핸들이 어긋났다"
 
+    # 편 뒤에 윤곽을 다시 그리면(꼭짓점을 지우고 새로 넣음) 옛 모양으로 덮어쓰지 않는다
+    scene, mainwindow = make_scene()
+    polygon = add_polygon(scene, mainwindow, jittery_circle(60, 60, 40))
+    polygon.setSelected(True)
+    press(scene, QtCore.Qt.Key.Key_G)
+    redrawn = jittery_circle(70, 70, 30)
+    polygon.delete()
+    for x, y in redrawn:
+        polygon.addPoint(QtCore.QPointF(x, y))
+    polygon.redraw()
+    press(scene, QtCore.Qt.Key.Key_G, QtCore.Qt.KeyboardModifier.ShiftModifier)
+    assert xy(polygon) == redrawn, "다시 그린 윤곽이 Shift+G 로 옛 모양이 됐다"
+
+    # 꼭짓점을 뺀 뒤에 펴면 그 시점의 모양이 새 복원 기준이 된다
+    polygon.removePoint(0)
+    trimmed = xy(polygon)
+    press(scene, QtCore.Qt.Key.Key_G)
+    assert xy(polygon) != trimmed, "꼭짓점을 뺀 뒤 G 키가 동작하지 않았다"
+    press(scene, QtCore.Qt.Key.Key_G, QtCore.Qt.KeyboardModifier.ShiftModifier)
+    assert xy(polygon) == trimmed, "꼭짓점을 뺀 뒤의 모양으로 돌아오지 않았다"
+
+    # 편 뒤 이미지 가장자리로 옮기고 되돌려도 윤곽이 이미지 밖으로 나가지 않는다
+    scene, mainwindow = make_scene()
+    polygon = add_polygon(scene, mainwindow, jittery_circle(100, 100, 40, jitter=10))
+    polygon.setSelected(True)
+    press(scene, QtCore.Qt.Key.Key_G)
+    polygon.setPos(-polygon.boundingRect().left(), 0)
+    press(scene, QtCore.Qt.Key.Key_G, QtCore.Qt.KeyboardModifier.ShiftModifier)
+    restored = [polygon.mapToScene(p) for p in polygon.points]
+    assert max(abs(math.hypot(p.x() - polygon.pos().x() - 100, p.y() - 100) - 40) for p in restored) > 9.9, "원래 모양이 돌아오지 않았다"
+    assert all(-1e-6 <= p.x() <= 200 + 1e-6 and -1e-6 <= p.y() <= 200 + 1e-6 for p in restored), "되돌린 윤곽이 이미지 밖으로 나갔다"
+    for vertex, point in zip(polygon.vertices, restored):
+        assert (vertex.pos() - point).manhattanLength() < 1e-6, "가장자리에서 되돌린 뒤 핸들이 어긋났다"
+
     # VIEW 모드가 아니면 아무것도 하지 않는다
     scene, mainwindow = make_scene()
     polygon = add_polygon(scene, mainwindow, jittery_circle(60, 60, 40))

@@ -359,6 +359,19 @@ class Polygon(QtWidgets.QGraphicsPolygonItem, BaseShape):
 
     # ---- outline smoothing ---------------------------------------------------
 
+    # 꼭짓점을 넣거나 빼면 복원용 옛 모양은 더 이상 이 윤곽의 것이 아니다
+    def addPoint(self, point: QtCore.QPointF):
+        self._points_before_smooth = None
+        super().addPoint(point)
+
+    def removePoint(self, index):
+        self._points_before_smooth = None
+        return super().removePoint(index)
+
+    def delete(self):
+        self._points_before_smooth = None
+        super().delete()
+
     def _replace_points(self, xy):
         """Replace every point with *xy* (same count) and keep the handles in sync."""
         self.points = [QtCore.QPointF(x, y) for x, y in xy]
@@ -381,11 +394,16 @@ class Polygon(QtWidgets.QGraphicsPolygonItem, BaseShape):
     def restore_before_smooth(self) -> bool:
         """Put back the outline from before the first smooth. Returns False when there is none."""
         before = self._points_before_smooth
-        # 편 뒤에 꼭짓점을 넣거나 뺐으면 핸들 수가 달라 되돌릴 수 없다
-        if before is None or len(before) != len(self.points):
+        if before is None:
             return False
         self._points_before_smooth = None
-        self._replace_points(before)
+        # 편 뒤에 가장자리로 옮겼으면 더 큰 옛 모양이 이미지 밖으로 나간다. 그만큼 안쪽으로 민다
+        scene_rect = self.scene().sceneRect()
+        xs = [x + self.pos().x() for x, _ in before]
+        ys = [y + self.pos().y() for _, y in before]
+        dx = max(scene_rect.left() - min(xs), 0) + min(scene_rect.right() - max(xs), 0)
+        dy = max(scene_rect.top() - min(ys), 0) + min(scene_rect.bottom() - max(ys), 0)
+        self._replace_points([(x + dx, y + dy) for x, y in before])
         return True
 
     # ---- Qt item events ------------------------------------------------------
